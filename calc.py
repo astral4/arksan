@@ -5,10 +5,6 @@ import pandas as pd
 def exclude_limited_stages(stage_ids):
     return stage_ids.str.startswith("main") | stage_ids.str.endswith("perm")
 
-def fix_stage_ids(df):
-    df.index = df.index.str.removesuffix("_perm")
-    return df
-
 drop_matrix = (
     requests.get("https://penguin-stats.io/PenguinStats/api/v2/result/matrix")
             .json()
@@ -30,6 +26,5 @@ drop_data = (
       .drop(["times", "quantity"], axis=1)
       .pivot(index="stageId", columns="itemId", values="drop_rate")
       .fillna(0)
-      .pipe(fix_stage_ids)
-      .assign(sanity = lambda df: df.index.map(lambda stage_id: stage_data[stage_id]["apCost"]))
+      .assign(sanity = lambda df: df.index.map(lambda stage_id: stage_data[stage_id.removesuffix("_perm")]["apCost"]))
 )
