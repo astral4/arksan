@@ -13,10 +13,6 @@ def fix_stage_ids(df):
     df.index = df.index.str.removesuffix("_perm")
     return df
 
-def get_sanity_costs(df):
-    df["sanity"] = df.index.map(lambda stage_id: stage_data[stage_id]["apCost"])
-    return df
-
 drop_matrix = (
     requests.get("https://penguin-stats.io/PenguinStats/api/v2/result/matrix")
             .json()
@@ -39,5 +35,5 @@ drop_data = (
       .pivot(index="stageId", columns="itemId", values="drop_rate")
       .fillna(0)
       .pipe(fix_stage_ids)
-      .pipe(get_sanity_costs)
+      .assign(sanity = lambda df: df.index.map(lambda stage_id: stage_data[stage_id]["apCost"]))
 )
