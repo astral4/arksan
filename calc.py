@@ -30,8 +30,7 @@ stage_data = (
 )
 
 drop_data = (
-    pd.json_normalize(drop_matrix)
-      .drop(["stdDev", "start", "end"], axis=1)
+    pd.DataFrame(drop_matrix, columns=["stageId", "itemId", "times", "quantity"])
       .pipe(lambda df: df[df["times"] >= MIN_RUN_THRESHOLD])
       .pipe(lambda df: df[exclude_limited_stages(df["stageId"])])
       .pipe(lambda df: df[~df["itemId"].isin(EXCLUDED_ITEMS)])
