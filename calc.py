@@ -31,3 +31,7 @@ drop_data = (
       .assign(sanity = lambda df: df.index.map(lambda stage_id: stage_data[stage_id.removesuffix("_perm")]["apCost"]))
       .pipe(patch_sanity_cost)
 )
+
+const_mat = drop_data.iloc[:, :-1].to_numpy()
+obj_vec = const_mat.sum(axis=0)
+const_vec = drop_data.iloc[:, -1].to_numpy()
