@@ -2,10 +2,6 @@ from constants import *
 import requests
 import pandas as pd
 
-def calc_drop_rates(df):
-    df["drop_rate"] = df["quantity"] / df["times"]
-    return df
-
 def exclude_limited_stages(stage_ids):
     return stage_ids.str.startswith("main") | stage_ids.str.endswith("perm")
 
@@ -30,7 +26,7 @@ drop_data = (
       .pipe(lambda df: df[df["times"] >= MIN_RUN_THRESHOLD])
       .pipe(lambda df: df[exclude_limited_stages(df["stageId"])])
       .pipe(lambda df: df[~df["itemId"].isin(EXCLUDED_ITEMS)])
-      .pipe(calc_drop_rates)
+      .assign(drop_rate = lambda df: df["quantity"] / df["times"])
       .drop(["times", "quantity"], axis=1)
       .pivot(index="stageId", columns="itemId", values="drop_rate")
       .fillna(0)
