@@ -2,9 +2,6 @@ from constants import *
 import requests
 import pandas as pd
 
-def exclude_limited_stages(stage_ids):
-    return stage_ids.str.startswith("main") | stage_ids.str.endswith("perm")
-
 drop_matrix = (
     requests.get("https://penguin-stats.io/PenguinStats/api/v2/result/matrix")
             .json()
@@ -20,7 +17,7 @@ stage_data = (
 drop_data = (
     pd.DataFrame(drop_matrix, columns=["stageId", "itemId", "times", "quantity"])
       .pipe(lambda df: df[df["times"] >= MIN_RUN_THRESHOLD])
-      .pipe(lambda df: df[exclude_limited_stages(df["stageId"])])
+      .pipe(lambda df: df[df["stageId"].str.startswith("main") | df["stageId"].str.endswith("perm")])
       .pipe(lambda df: df[~df["itemId"].isin(EXCLUDED_ITEMS)])
       .assign(drop_rate = lambda df: df["quantity"] / df["times"])
       .drop(["times", "quantity"], axis=1)
