@@ -1,14 +1,13 @@
 from constants import *
 import requests
 import pandas as pd
-import numpy as np
 
 def calc_drop_rates(df):
     df["drop_rate"] = df["quantity"] / df["times"]
     return df
 
 def exclude_limited_stages(stage_ids):
-    return np.logical_or(stage_ids.str.startswith("main"), stage_ids.str.endswith("perm"))
+    return stage_ids.str.startswith("main") | stage_ids.str.endswith("perm")
 
 drop_matrix = requests.get("https://penguin-stats.io/PenguinStats/api/v2/result/matrix")\
                       .json()
