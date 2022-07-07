@@ -14,6 +14,11 @@ stage_data = (
             ["stages"]
 )
 
+def patch_sanity_cost(df):
+    df.at["a003_f03_perm", "sanity"] = 15
+    df.at["a003_f04_perm", "sanity"] = 18
+    return df
+
 drop_data = (
     pd.DataFrame(drop_matrix, columns=["stageId", "itemId", "times", "quantity"])
       .pipe(lambda df: df[df["times"] >= MIN_RUN_THRESHOLD])
@@ -24,4 +29,5 @@ drop_data = (
       .pivot(index="stageId", columns="itemId", values="drop_rate")
       .fillna(0)
       .assign(sanity = lambda df: df.index.map(lambda stage_id: stage_data[stage_id.removesuffix("_perm")]["apCost"]))
+      .pipe(patch_sanity_cost)
 )
