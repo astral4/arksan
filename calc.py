@@ -1,6 +1,7 @@
 from constants import *
 import requests
 import pandas as pd
+from scipy.optimize import linprog
 
 drop_matrix = (
     requests.get("https://penguin-stats.io/PenguinStats/api/v2/result/matrix")
@@ -40,3 +41,8 @@ drop_data = (
 const_mat = drop_data.iloc[:, :-1].to_numpy()
 obj_vec = -const_mat.sum(axis=0)
 const_vec = drop_data.iloc[:, -1].to_numpy()
+
+sanity_values = (
+    linprog(obj_vec, const_mat, const_vec)
+    .x
+)
