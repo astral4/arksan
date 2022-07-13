@@ -14,6 +14,11 @@ stage_data = (
             ["stages"]
 )
 
+def filter_stages(stage_ids):
+    return (stage_ids.str.startswith(("main", "wk_kc", "wk_fly", "wk_armor")) # wk_kc, wk_fly, wk_armor
+          | stage_ids.str.endswith("perm")
+    )
+
 def patch_sanity_cost(df):
     df.at["a003_f03_perm", "sanity"] = 15
     df.at["a003_f04_perm", "sanity"] = 18
@@ -22,7 +27,7 @@ def patch_sanity_cost(df):
 drop_data = (
     pd.DataFrame(drop_matrix, columns=["stageId", "itemId", "times", "quantity"])
       .pipe(lambda df: df[df["times"] >= MIN_RUN_THRESHOLD])
-      .pipe(lambda df: df[df["stageId"].str.startswith("main") | df["stageId"].str.endswith("perm")])
+      .pipe(lambda df: df[filter_stages(df["stageId"])])
       .pipe(lambda df: df[~df["itemId"].isin(EXCLUDED_ITEMS)])
       .assign(drop_rate = lambda df: df["quantity"] / df["times"])
       .drop(["times", "quantity"], axis=1)
@@ -33,5 +38,5 @@ drop_data = (
 )
 
 const_mat = drop_data.iloc[:, :-1].to_numpy()
-obj_vec = const_mat.sum(axis=0)
+obj_vec = -const_mat.sum(axis=0)
 const_vec = drop_data.iloc[:, -1].to_numpy()
