@@ -41,7 +41,7 @@ drop_data = (
     pd.DataFrame(drop_matrix, columns=["stageId", "itemId", "times", "quantity"])
       .query("times >= @MIN_RUN_THRESHOLD")
       .pipe(lambda df: df[filter_stages(df["stageId"])])
-      .query("itemId not in @EXCLUDED_ITEMS")
+      .query("itemId in @INCLUDED_ITEMS")
       .assign(drop_rate = lambda df: df["quantity"] / df["times"])
       .pivot(index="stageId", columns="itemId", values="drop_rate")
       .fillna(0) # do this in the to_numpy() method instead
