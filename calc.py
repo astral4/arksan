@@ -25,6 +25,7 @@ recipes = (
 
 recipe_matrix = (
     pd.json_normalize(recipes, record_path="costs", meta="itemId")
+      .pivot(index="itemId", columns="id", values="count")
 )
 
 def filter_stages(stage_ids):
