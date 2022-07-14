@@ -13,6 +13,7 @@ stage_data = (
     requests.get("https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/stage_table.json")
             .json()
             ["stages"]
+            .values()
 )
 
 def filter_stages(stage_ids):
@@ -20,9 +21,8 @@ def filter_stages(stage_ids):
           | stage_ids.str.endswith("perm")
     )
 
-def patch_sanity_cost(df):
-    df.at["a003_f03_perm", "sanity"] = 15
-    df.at["a003_f04_perm", "sanity"] = 18
+def fix_stage_ids(df):
+    df.index = df.index.str.removesuffix("_perm")
     return df
 
 drop_data = (
@@ -33,13 +33,28 @@ drop_data = (
       .assign(drop_rate = lambda df: df["quantity"] / df["times"])
       .pivot(index="stageId", columns="itemId", values="drop_rate")
       .fillna(0)
-      .assign(sanity = lambda df: df.index.map(lambda stage_id: stage_data[stage_id.removesuffix("_perm")]["apCost"]))
-      .pipe(patch_sanity_cost)
+      .pipe(fix_stage_ids)
 )
 
-const_mat = drop_data.iloc[:, :-1].to_numpy()
+def fixer(df):
+    return df.loc[df.index.isin(drop_data.index)]
+
+def patch_sanity_cost(df):
+    df.at["a003_f03", "apCost"] = 15
+    df.at["a003_f04", "apCost"] = 18
+    return df
+
+sanity_costs = (
+    pd.DataFrame(stage_data, columns=["stageId", "apCost"])
+      .set_index("stageId")
+      .pipe(fixer)
+      .pipe(patch_sanity_cost)
+      .reindex(drop_data.index)
+)
+
+const_mat = drop_data.to_numpy()
 obj_vec = -const_mat.sum(axis=0)
-const_vec = drop_data.iloc[:, -1].to_numpy()
+const_vec = sanity_costs.to_numpy()
 
 sanity_values = (
     linprog(obj_vec, const_mat, const_vec)
