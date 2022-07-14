@@ -27,7 +27,7 @@ def fix_stage_ids(df):
 
 drop_data = (
     pd.DataFrame(drop_matrix, columns=["stageId", "itemId", "times", "quantity"])
-      .pipe(lambda df: df[df["times"] >= MIN_RUN_THRESHOLD])
+      .query("times >= @MIN_RUN_THRESHOLD")
       .pipe(lambda df: df[filter_stages(df["stageId"])])
       .query("itemId not in @EXCLUDED_ITEMS")
       .assign(drop_rate = lambda df: df["quantity"] / df["times"])
