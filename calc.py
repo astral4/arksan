@@ -36,9 +36,6 @@ drop_data = (
       .pipe(fix_stage_ids)
 )
 
-def fixer(df):
-    return df.loc[df.index.isin(drop_data.index)]
-
 def patch_sanity_cost(df):
     df.at["a003_f03", "apCost"] = 15
     df.at["a003_f04", "apCost"] = 18
@@ -47,7 +44,7 @@ def patch_sanity_cost(df):
 sanity_costs = (
     pd.DataFrame(stage_data, columns=["stageId", "apCost"])
       .set_index("stageId")
-      .pipe(fixer) # try the same query thing as in drop_data
+      .query("index in @drop_data.index")
       .pipe(patch_sanity_cost)
       .reindex(drop_data.index)
 )
