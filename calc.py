@@ -26,6 +26,7 @@ recipes = (
 recipe_matrix = (
     pd.json_normalize(recipes, record_path="costs", meta="itemId")
       .pivot(index="itemId", columns="id", values="count")
+      .reindex(columns=INCLUDED_ITEMS)
 )
 
 def filter_stages(stage_ids):
@@ -44,6 +45,7 @@ drop_data = (
       .query("itemId in @INCLUDED_ITEMS")
       .assign(drop_rate = lambda df: df["quantity"] / df["times"])
       .pivot(index="stageId", columns="itemId", values="drop_rate")
+      .reindex(columns=INCLUDED_ITEMS)
       .fillna(0) # do this in the to_numpy() method instead
       .pipe(fix_stage_ids)
 )
