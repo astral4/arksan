@@ -31,7 +31,6 @@ drop_data = (
       .pipe(lambda df: df[filter_stages(df["stageId"])])
       .pipe(lambda df: df[~df["itemId"].isin(EXCLUDED_ITEMS)])
       .assign(drop_rate = lambda df: df["quantity"] / df["times"])
-      .drop(["times", "quantity"], axis=1)
       .pivot(index="stageId", columns="itemId", values="drop_rate")
       .fillna(0)
       .assign(sanity = lambda df: df.index.map(lambda stage_id: stage_data[stage_id.removesuffix("_perm")]["apCost"]))
