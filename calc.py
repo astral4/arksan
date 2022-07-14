@@ -16,6 +16,17 @@ stage_data = (
             .values()
 )
 
+recipes = (
+    requests.get("https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/en_US/gamedata/excel/building_data.json")
+            .json()
+            ["workshopFormulas"]
+            .values()
+)
+
+recipe_matrix = (
+    pd.json_normalize(recipes, record_path="costs", meta="itemId")
+)
+
 def filter_stages(stage_ids):
     return (stage_ids.str.startswith(("main", "wk_kc", "wk_fly", "wk_armor")) # wk_kc, wk_fly, wk_armor
           | stage_ids.str.endswith("perm")
