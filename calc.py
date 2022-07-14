@@ -29,10 +29,10 @@ drop_data = (
     pd.DataFrame(drop_matrix, columns=["stageId", "itemId", "times", "quantity"])
       .pipe(lambda df: df[df["times"] >= MIN_RUN_THRESHOLD])
       .pipe(lambda df: df[filter_stages(df["stageId"])])
-      .pipe(lambda df: df[~df["itemId"].isin(EXCLUDED_ITEMS)])
+      .query("itemId not in @EXCLUDED_ITEMS")
       .assign(drop_rate = lambda df: df["quantity"] / df["times"])
       .pivot(index="stageId", columns="itemId", values="drop_rate")
-      .fillna(0)
+      .fillna(0) # do this in the to_numpy() method instead
       .pipe(fix_stage_ids)
 )
 
@@ -47,7 +47,7 @@ def patch_sanity_cost(df):
 sanity_costs = (
     pd.DataFrame(stage_data, columns=["stageId", "apCost"])
       .set_index("stageId")
-      .pipe(fixer)
+      .pipe(fixer) # try the same query thing as in drop_data
       .pipe(patch_sanity_cost)
       .reindex(drop_data.index)
 )
