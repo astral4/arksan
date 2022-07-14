@@ -3,13 +3,13 @@ import requests
 import pandas as pd
 from scipy.optimize import linprog
 
-drop_matrix = (
+drops = (
     requests.get("https://penguin-stats.io/PenguinStats/api/v2/result/matrix")
             .json()
             ["matrix"]
 )
 
-stage_data = (
+stages = (
     requests.get("https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/stage_table.json")
             .json()
             ["stages"]
@@ -23,12 +23,6 @@ recipes = (
             .values()
 )
 
-recipe_matrix = (
-    pd.json_normalize(recipes, record_path="costs", meta="itemId")
-      .pivot(index="itemId", columns="id", values="count")
-      .reindex(columns=INCLUDED_ITEMS)
-)
-
 def filter_stages(stage_ids):
     return (stage_ids.str.startswith(("main", "wk_kc", "wk_fly", "wk_armor")) # wk_kc, wk_fly, wk_armor
           | stage_ids.str.endswith("perm")
@@ -38,8 +32,8 @@ def fix_stage_ids(df):
     df.index = df.index.str.removesuffix("_perm")
     return df
 
-drop_data = (
-    pd.DataFrame(drop_matrix, columns=["stageId", "itemId", "times", "quantity"])
+drop_matrix = (
+    pd.DataFrame(drops, columns=["stageId", "itemId", "times", "quantity"])
       .query("times >= @MIN_RUN_THRESHOLD")
       .pipe(lambda df: df[filter_stages(df["stageId"])])
       .query("itemId in @INCLUDED_ITEMS")
@@ -56,14 +50,20 @@ def patch_sanity_cost(df):
     return df
 
 sanity_costs = (
-    pd.DataFrame(stage_data, columns=["stageId", "apCost"])
+    pd.DataFrame(stages, columns=["stageId", "apCost"])
       .set_index("stageId")
       .query("index in @drop_data.index")
       .pipe(patch_sanity_cost)
-      .reindex(drop_data.index)
+      .reindex(drop_matrix.index)
 )
 
-const_mat = drop_data.to_numpy()
+recipe_matrix = (
+    pd.json_normalize(recipes, record_path="costs", meta="itemId")
+      .pivot(index="itemId", columns="id", values="count")
+      .reindex(columns=INCLUDED_ITEMS)
+)
+
+const_mat = drop_matrix.to_numpy()
 obj_vec = -const_mat.sum(axis=0)
 const_vec = sanity_costs.to_numpy()
 
