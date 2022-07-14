@@ -61,6 +61,7 @@ recipe_matrix = (
     pd.json_normalize(recipes, record_path="costs", meta="itemId")
       .pivot(index="itemId", columns="id", values="count")
       .reindex(columns=INCLUDED_ITEMS)
+      .pipe(lambda df: -df)
 )
 
 const_mat = drop_matrix.to_numpy()
