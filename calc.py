@@ -68,10 +68,10 @@ item_rarity = (
 
 recipe_matrix = (
     pd.json_normalize(recipes, record_path="costs", meta="itemId")
-      .query("itemId in @INCLUDED_ITEMS")
       .pivot(index="itemId", columns="id", values="count")
-      .reindex(columns=INCLUDED_ITEMS)
+      .reindex(labels=INCLUDED_ITEMS, columns=INCLUDED_ITEMS)
       .pipe(lambda df: -df)
+      .to_numpy(na_value=0)
 )
 
 const_mat = drop_matrix.to_numpy()
