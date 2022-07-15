@@ -4,20 +4,20 @@ import pandas as pd
 from scipy.optimize import linprog
 
 drops = (
-    requests.get("https://penguin-stats.io/PenguinStats/api/v2/result/matrix")
+    requests.get(DROP_URL)
             .json()
             ["matrix"]
 )
 
 stages = (
-    requests.get("https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/stage_table.json")
+    requests.get(STAGE_URL)
             .json()
             ["stages"]
             .values()
 )
 
 recipes = (
-    requests.get("https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/en_US/gamedata/excel/building_data.json")
+    requests.get(RECIPE_URL)
             .json()
             ["workshopFormulas"]
             .values()
@@ -89,3 +89,4 @@ sanity_values = (
     linprog(obj, drop_matrix, sanity_costs, craft_matrix, craft_lmd_values)
     .x
 )
+print(sanity_values)

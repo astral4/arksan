@@ -1,3 +1,6 @@
+DROP_URL = "https://penguin-stats.io/PenguinStats/api/v2/result/matrix"
+STAGE_URL = "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/stage_table.json"
+RECIPE_URL = "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/building_data.json"
 MIN_RUN_THRESHOLD = 100
 INCLUDED_ITEMS = (
     "30011", "30021", "30031", "30041", "30051", "30061", # t1 mats
