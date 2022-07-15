@@ -8,4 +8,5 @@ char_debut_dates = (
       [0]
       .set_index("干员")
       .drop(columns=["国服上线途径", "主要获得方式", "干员预告"])
+      .query("稀有度 == 6")
 )
