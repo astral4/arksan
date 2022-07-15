@@ -1,7 +1,6 @@
 from constants import *
 import requests
 import pandas as pd
-from numpy import pad
 from scipy.optimize import linprog
 
 drops = (
@@ -75,7 +74,6 @@ recipe_matrix = (
     pd.json_normalize(recipes, record_path="costs", meta="itemId")
       .query("itemId in @INCLUDED_ITEMS")
       .pivot(index="itemId", columns="id", values="count")
-      .pipe(lambda df: pd.concat([df, pd.DataFrame(EXP_CARD_RELATION).set_index("itemId")]))
       .reindex(columns=INCLUDED_ITEMS)
       .pipe(lambda df: -df)
       .pipe(fill_ones)
@@ -84,11 +82,10 @@ recipe_matrix = (
 
 drop_matrix = drop_matrix.to_numpy(na_value=0)
 obj = -drop_matrix.sum(axis=0)
-craft_matrix = recipe_matrix + pad(recipe_data.to_numpy(na_value=0), pad_width=[(0, len(EXP_CARD_RELATION)), (0, 0)], mode="constant")
-craft_lmd_values = pad(recipe_data.index.get_level_values("craft_lmd_value").to_numpy(), pad_width=(0, len(EXP_CARD_RELATION)), mode="constant")
+craft_matrix = recipe_matrix + recipe_data.to_numpy(na_value=0)
+craft_lmd_values = recipe_data.index.get_level_values("craft_lmd_value").to_numpy()
 
 sanity_values = (
     linprog(obj, drop_matrix, sanity_costs, craft_matrix, craft_lmd_values)
     .x
 )
-# remember to devalue exp based on base production
