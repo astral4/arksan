@@ -14,3 +14,17 @@ STAGE_AP_COST = {
 }
 LMD_SANITY_VALUE = 36/10000 # CE-6
 BYPRODUCT_RATEUP = 1.8
+EXP_CARD_RELATION = (
+    {
+        "itemId": "2002",
+        "2001": 2,
+    },
+    {
+        "itemId": "2003",
+        "2001": 5,
+    },
+    {
+        "itemId": "2004",
+        "2001": 10,
+    },
+)
