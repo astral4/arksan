@@ -51,7 +51,6 @@ def patch_sanity_cost(df):
 sanity_costs = (
     pd.DataFrame(stages, columns=["stageId", "apCost"])
       .set_index("stageId")
-      .query("index in @drop_matrix.index")
       .pipe(patch_sanity_cost)
       .reindex(drop_matrix.index)
 )
