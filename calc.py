@@ -1,7 +1,6 @@
 from constants import *
 import requests
 import pandas as pd
-import numpy as np
 from scipy.optimize import linprog
 
 drops = (
