@@ -21,6 +21,10 @@ def fill_ones(df):
         df.at[id, id] = 1
     return df
 
+def finalize(df):
+    matrix = df.to_numpy(na_value=0)
+    return matrix, -matrix.sum(axis=0)
+
 drops = (
     requests.get(DROP_URL)
             .json()
@@ -97,8 +101,7 @@ recipe_matrix = (
       .to_numpy(na_value=0)
 )
 
-drop_matrix = drop_matrix.to_numpy(na_value=0)
-obj = -drop_matrix.sum(axis=0)
+drop_matrix, obj = finalize(drop_matrix)
 craft_matrix = recipe_matrix + recipe_data.to_numpy(na_value=0)
 craft_lmd_values = recipe_data.index.get_level_values("craft_lmd_value").to_numpy()
 
