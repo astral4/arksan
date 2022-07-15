@@ -17,9 +17,9 @@ def patch_stage_costs(df):
     df.loc[stages, "apCost"] = sanity_costs
     return df
 
-def fill_ones(df):
-    for id in df.index:
-        df.at[id, id] = 1
+def fill_diagonal(df, values):
+    for id, val in zip(df.index, values):
+        df.at[id, id] = val
     return df
 
 def finalize_drops(df):
@@ -82,7 +82,7 @@ recipe_data = (
                                            df["extraOutcomeRate"] *
                                            df["bp_weight"] /
                                            df["total_bp_weight"])
-      .pivot(index=["itemId", "craft_lmd_value"],
+      .pivot(index=["itemId", "count", "craft_lmd_value"],
              columns="bp_itemId",
              values="bp_sanity_coeff")
       .reindex(columns=INCLUDED_ITEMS)
@@ -98,7 +98,8 @@ ingredient_matrix = (
              values="count")
       .reindex(columns=INCLUDED_ITEMS)
       .pipe(lambda df: -df)
-      .pipe(fill_ones)
+      .pipe(fill_diagonal,
+            recipe_data.index.get_level_values("count"))
       .to_numpy(na_value=0)
 )
 
