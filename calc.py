@@ -8,12 +8,13 @@ def filter_stages(stage_ids):
           | stage_ids.str.endswith("perm")
     )
 
-def fix_stage_ids(df):
+def trim_stage_ids(df):
     df.index = df.index.str.removesuffix("_perm")
     return df
 
-def patch_sanity_cost(df):
-    df.loc[STAGE_AP_COST.keys(), "apCost"] = list(STAGE_AP_COST.values())
+def patch_stage_costs(df):
+    stages, sanity_costs = zip(*MISSING_STAGE_COSTS.items())
+    df.loc[stages, "apCost"] = sanity_costs
     return df
 
 def fill_ones(df):
@@ -21,7 +22,7 @@ def fill_ones(df):
         df.at[id, id] = 1
     return df
 
-def finalize(df):
+def finalize_drops(df):
     matrix = df.to_numpy(na_value=0)
     return matrix, -matrix.sum(axis=0)
 
@@ -42,7 +43,7 @@ drop_matrix = (
              columns="itemId",
              values="drop_rate")
       .reindex(columns=INCLUDED_ITEMS)
-      .pipe(fix_stage_ids)
+      .pipe(trim_stage_ids)
 )
 
 stages = (
@@ -56,7 +57,7 @@ sanity_costs = (
     pd.DataFrame(stages,
                  columns=["stageId", "apCost"])
       .set_index("stageId")
-      .pipe(patch_sanity_cost)
+      .pipe(patch_stage_costs)
       .reindex(drop_matrix.index)
       .to_numpy()
 )
@@ -87,7 +88,7 @@ recipe_data = (
       .reindex(columns=INCLUDED_ITEMS)
 )
 
-recipe_matrix = (
+ingredient_matrix = (
     pd.json_normalize(recipes,
                       record_path="costs",
                       meta="itemId")
@@ -101,11 +102,11 @@ recipe_matrix = (
       .to_numpy(na_value=0)
 )
 
-drop_matrix, obj = finalize(drop_matrix)
-craft_matrix = recipe_matrix + recipe_data.to_numpy(na_value=0)
+stage_drops, sanity_profit = finalize_drops(drop_matrix)
+item_equiv_matrix = ingredient_matrix + recipe_data.to_numpy(na_value=0)
 craft_lmd_values = recipe_data.index.get_level_values("craft_lmd_value").to_numpy()
 
 sanity_values = (
-    linprog(obj, drop_matrix, sanity_costs, craft_matrix, craft_lmd_values)
+    linprog(sanity_profit, stage_drops, sanity_costs, item_equiv_matrix, craft_lmd_values)
     .x
 )

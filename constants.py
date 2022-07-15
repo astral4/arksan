@@ -10,7 +10,7 @@ INCLUDED_ITEMS = (
     "30115", "30125", "30135", "30145", # t5 mats
     "3301", "3302", "3303", # skillbooks
 )
-STAGE_AP_COST = {
+MISSING_STAGE_COSTS = {
     "a003_f03": 15, # OF-F3
     "a003_f04": 18, # OF-F4
 }
