@@ -34,9 +34,9 @@ drops = (
 drop_matrix = (
     pd.DataFrame(drops,
                  columns=["stageId", "itemId", "times", "quantity"])
-      .query("times >= @MIN_RUN_THRESHOLD")
+      .query("times >= @MIN_RUN_THRESHOLD and \
+              itemId in @INCLUDED_ITEMS")
       .pipe(lambda df: df[filter_stages(df["stageId"])])
-      .query("itemId in @INCLUDED_ITEMS")
       .assign(drop_rate = lambda df: df["quantity"] / df["times"])
       .pivot(index="stageId",
              columns="itemId",
