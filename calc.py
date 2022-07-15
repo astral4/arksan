@@ -28,12 +28,15 @@ drops = (
 )
 
 drop_matrix = (
-    pd.DataFrame(drops, columns=["stageId", "itemId", "times", "quantity"])
+    pd.DataFrame(drops,
+                 columns=["stageId", "itemId", "times", "quantity"])
       .query("times >= @MIN_RUN_THRESHOLD")
       .pipe(lambda df: df[filter_stages(df["stageId"])])
       .query("itemId in @INCLUDED_ITEMS")
       .assign(drop_rate = lambda df: df["quantity"] / df["times"])
-      .pivot(index="stageId", columns="itemId", values="drop_rate")
+      .pivot(index="stageId",
+             columns="itemId",
+             values="drop_rate")
       .reindex(columns=INCLUDED_ITEMS)
       .pipe(fix_stage_ids)
 )
@@ -46,7 +49,8 @@ stages = (
 )
 
 sanity_costs = (
-    pd.DataFrame(stages, columns=["stageId", "apCost"])
+    pd.DataFrame(stages,
+                 columns=["stageId", "apCost"])
       .set_index("stageId")
       .pipe(patch_sanity_cost)
       .reindex(drop_matrix.index)
@@ -61,19 +65,32 @@ recipes = (
 )
 
 recipe_data = (
-    pd.json_normalize(recipes, record_path="extraOutcomeGroup", meta=["itemId", "count", "goldCost", "extraOutcomeRate"], record_prefix="bp_")
+    pd.json_normalize(recipes,
+                      record_path="extraOutcomeGroup",
+                      meta=["itemId", "count", "goldCost", "extraOutcomeRate"],
+                      record_prefix="bp_")
       .query("itemId in @INCLUDED_ITEMS")
       .assign(craft_lmd_value = lambda df: df["goldCost"] * LMD_SANITY_VALUE)
-      .assign(total_bp_weight = lambda df: df.groupby("itemId")["bp_weight"].transform("sum"))
-      .assign(bp_sanity_coeff = lambda df: BYPRODUCT_RATEUP * df["extraOutcomeRate"] * df["bp_weight"] / df["total_bp_weight"])
-      .pivot(index=["itemId", "craft_lmd_value"], columns="bp_itemId", values="bp_sanity_coeff")
+      .assign(total_bp_weight = lambda df: df.groupby("itemId")["bp_weight"]
+                                             .transform("sum"))
+      .assign(bp_sanity_coeff = lambda df: BYPRODUCT_RATEUP *
+                                           df["extraOutcomeRate"] *
+                                           df["bp_weight"] /
+                                           df["total_bp_weight"])
+      .pivot(index=["itemId", "craft_lmd_value"],
+             columns="bp_itemId",
+             values="bp_sanity_coeff")
       .reindex(columns=INCLUDED_ITEMS)
 )
 
 recipe_matrix = (
-    pd.json_normalize(recipes, record_path="costs", meta="itemId")
+    pd.json_normalize(recipes,
+                      record_path="costs",
+                      meta="itemId")
       .query("itemId in @INCLUDED_ITEMS")
-      .pivot(index="itemId", columns="id", values="count")
+      .pivot(index="itemId",
+             columns="id",
+             values="count")
       .reindex(columns=INCLUDED_ITEMS)
       .pipe(lambda df: -df)
       .pipe(fill_ones)
