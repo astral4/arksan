@@ -24,7 +24,7 @@ recipes = (
 )
 
 def filter_stages(stage_ids):
-    return (stage_ids.str.startswith(("main", "wk_kc", "wk_fly", "wk_armor")) # wk_kc, wk_fly, wk_armor
+    return (stage_ids.str.startswith(("main", "sub", "wk_kc", "wk_fly", "wk_armor"))
           | stage_ids.str.endswith("perm")
     )
 
