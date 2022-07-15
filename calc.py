@@ -58,6 +58,11 @@ sanity_costs = (
 
 recipe_data = (
     pd.json_normalize(recipes, record_path="extraOutcomeGroup", meta=["itemId", "count", "goldCost", "extraOutcomeRate"], record_prefix="bp_")
+      .query("itemId in @INCLUDED_ITEMS")
+      .assign(craft_lmd_value = lambda df: df["goldCost"] * LMD_SANITY_VALUE)
+      .assign(total_bp_weight = lambda df: df.groupby("itemId")["bp_weight"].transform("sum"))
+      .assign(bp_sanity_coeff = lambda df: BYPRODUCT_RATEUP * df["extraOutcomeRate"] * df["bp_weight"] / df["total_bp_weight"])
+      .pivot(index=["itemId", "craft_lmd_value"], columns="bp_itemId", values="bp_sanity_coeff")
 )
 
 def fill_ones(df):
