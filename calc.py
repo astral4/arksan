@@ -56,6 +56,10 @@ sanity_costs = (
       .reindex(drop_matrix.index)
 )
 
+recipe_data = (
+    pd.json_normalize(recipes, record_path="extraOutcomeGroup", meta=["itemId", "count", "goldCost", "extraOutcomeRate"], record_prefix="bp_")
+)
+
 def fill_ones(df):
     for id in df.index:
         df.at[id, id] = 1
