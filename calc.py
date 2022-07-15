@@ -111,3 +111,5 @@ sanity_values = (
     linprog(sanity_profit, stage_drops, sanity_costs, item_equiv_matrix, craft_lmd_values)
     .x
 )
+
+sanity_values = {item_id: sanity_value for item_id, sanity_value in zip(INCLUDED_ITEMS, sanity_values)}
