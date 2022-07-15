@@ -56,15 +56,20 @@ sanity_costs = (
       .reindex(drop_matrix.index)
 )
 
+def fill_ones(df):
+    for id in df.index:
+        df.at[id, id] = 1
+    return df
+
 recipe_matrix = (
     pd.json_normalize(recipes, record_path="costs", meta="itemId")
+      .query("itemId in @INCLUDED_ITEMS")
       .pivot(index="itemId", columns="id", values="count")
-      .reindex(labels=INCLUDED_ITEMS, columns=INCLUDED_ITEMS)
+      .reindex(columns=INCLUDED_ITEMS)
       .pipe(lambda df: -df)
-      .to_numpy(na_value=0)
+      .fillna(0)
+      .pipe(fill_ones)
 )
-
-np.fill_diagonal(recipe_matrix, 1)
 
 const_mat = drop_matrix.to_numpy()
 obj_vec = -const_mat.sum(axis=0)
