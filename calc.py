@@ -91,3 +91,4 @@ sanity_values = (
     linprog(obj, drop_matrix, sanity_costs, craft_matrix, craft_lmd_values)
     .x
 )
+# remember to devalue exp based on base production
