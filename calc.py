@@ -3,6 +3,10 @@ import requests
 import pandas as pd
 from scipy.optimize import linprog
 
+def unix_to_dt(df):
+    df[["start", "end"]] = df[["start", "end"]].apply(pd.to_datetime, unit="ms")
+    return df
+
 def filter_stages(stage_ids):
     return (stage_ids.str.startswith(("main", "sub", "wk"))
           | stage_ids.str.endswith("perm")
@@ -33,8 +37,9 @@ drops = (
 )
 
 drop_matrix = (
-    pd.DataFrame(drops,
-                 columns=["stageId", "itemId", "times", "quantity"])
+    pd.DataFrame(drops)
+      .drop(columns="stdDev")
+      .pipe(unix_to_dt)
       .query("times >= @MIN_RUN_THRESHOLD and \
               itemId in @INCLUDED_ITEMS")
       .pipe(lambda df: df[filter_stages(df["stageId"])])
