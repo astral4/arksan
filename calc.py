@@ -45,8 +45,7 @@ drop_matrix = (
 )
 
 def patch_sanity_cost(df):
-    df.at["a003_f03", "apCost"] = 15
-    df.at["a003_f04", "apCost"] = 18
+    df.loc[STAGE_AP_COST.keys(), "apCost"] = list(STAGE_AP_COST.values())
     return df
 
 sanity_costs = (

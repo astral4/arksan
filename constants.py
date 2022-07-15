@@ -8,3 +8,7 @@ INCLUDED_ITEMS = (
     "2001", "2002", "2003", "2004", # exp cards
     "3301", "3302", "3303", # skillbooks
 )
+STAGE_AP_COST = {
+    "a003_f03": 15,
+    "a003_f04": 18,
+}
