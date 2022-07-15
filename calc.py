@@ -1,6 +1,7 @@
 from constants import *
 import requests
 import pandas as pd
+import numpy as np
 from scipy.optimize import linprog
 
 drops = (
@@ -73,6 +74,8 @@ recipe_matrix = (
       .pipe(lambda df: -df)
       .to_numpy(na_value=0)
 )
+
+np.fill_diagonal(recipe_matrix, 1)
 
 const_mat = drop_matrix.to_numpy()
 obj_vec = -const_mat.sum(axis=0)
