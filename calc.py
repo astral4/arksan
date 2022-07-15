@@ -62,6 +62,10 @@ sanity_costs = (
       .reindex(drop_matrix.index)
 )
 
+item_rarity = (
+    pd.DataFrame(items, columns=["itemId", "rarity"])
+)
+
 recipe_matrix = (
     pd.json_normalize(recipes, record_path="costs", meta="itemId")
       .pivot(index="itemId", columns="id", values="count")
