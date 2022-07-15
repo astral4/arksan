@@ -23,6 +23,13 @@ recipes = (
             .values()
 )
 
+items = (
+    requests.get("https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/item_table.json")
+            .json()
+            ["items"]
+            .values()
+)
+
 def filter_stages(stage_ids):
     return (stage_ids.str.startswith(("main", "sub", "wk_kc", "wk_fly", "wk_armor"))
           | stage_ids.str.endswith("perm")
