@@ -1,94 +1,115 @@
 from constants import *
 import requests
 import pandas as pd
-from numpy import pad
 from scipy.optimize import linprog
-
-drops = (
-    requests.get("https://penguin-stats.io/PenguinStats/api/v2/result/matrix")
-            .json()
-            ["matrix"]
-)
-
-stages = (
-    requests.get("https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/stage_table.json")
-            .json()
-            ["stages"]
-            .values()
-)
-
-recipes = (
-    requests.get("https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/en_US/gamedata/excel/building_data.json")
-            .json()
-            ["workshopFormulas"]
-            .values()
-)
 
 def filter_stages(stage_ids):
     return (stage_ids.str.startswith(("main", "sub", "wk"))
           | stage_ids.str.endswith("perm")
     )
 
-def fix_stage_ids(df):
+def trim_stage_ids(df):
     df.index = df.index.str.removesuffix("_perm")
     return df
 
-drop_matrix = (
-    pd.DataFrame(drops, columns=["stageId", "itemId", "times", "quantity"])
-      .query("times >= @MIN_RUN_THRESHOLD")
-      .pipe(lambda df: df[filter_stages(df["stageId"])])
-      .query("itemId in @INCLUDED_ITEMS")
-      .assign(drop_rate = lambda df: df["quantity"] / df["times"])
-      .pivot(index="stageId", columns="itemId", values="drop_rate")
-      .reindex(columns=INCLUDED_ITEMS)
-      .pipe(fix_stage_ids)
-)
-
-def patch_sanity_cost(df):
-    df.loc[STAGE_AP_COST.keys(), "apCost"] = list(STAGE_AP_COST.values())
+def patch_stage_costs(df):
+    stages, sanity_costs = zip(*MISSING_STAGE_COSTS.items())
+    df.loc[stages, "apCost"] = sanity_costs
     return df
 
+def fill_diagonal(df, values):
+    for id, val in zip(df.index, values):
+        df.at[id, id] = val
+    return df
+
+def finalize_drops(df):
+    matrix = df.to_numpy(na_value=0)
+    return matrix, -matrix.sum(axis=0)
+
+drops = (
+    requests.get(DROP_URL)
+            .json()
+            ["matrix"]
+)
+
+drop_matrix = (
+    pd.DataFrame(drops,
+                 columns=["stageId", "itemId", "times", "quantity"])
+      .query("times >= @MIN_RUN_THRESHOLD and \
+              itemId in @INCLUDED_ITEMS")
+      .pipe(lambda df: df[filter_stages(df["stageId"])])
+      .assign(drop_rate = lambda df: df["quantity"] / df["times"])
+      .pivot(index="stageId",
+             columns="itemId",
+             values="drop_rate")
+      .reindex(columns=INCLUDED_ITEMS)
+      .pipe(trim_stage_ids)
+)
+
+stages = (
+    requests.get(STAGE_URL)
+            .json()
+            ["stages"]
+            .values()
+)
+
 sanity_costs = (
-    pd.DataFrame(stages, columns=["stageId", "apCost"])
+    pd.DataFrame(stages,
+                 columns=["stageId", "apCost"])
       .set_index("stageId")
-      .pipe(patch_sanity_cost)
+      .pipe(patch_stage_costs)
       .reindex(drop_matrix.index)
       .to_numpy()
 )
 
+recipes = (
+    requests.get(RECIPE_URL)
+            .json()
+            ["workshopFormulas"]
+            .values()
+)
+
 recipe_data = (
-    pd.json_normalize(recipes, record_path="extraOutcomeGroup", meta=["itemId", "count", "goldCost", "extraOutcomeRate"], record_prefix="bp_")
+    pd.json_normalize(recipes,
+                      record_path="extraOutcomeGroup",
+                      meta=["itemId", "count", "goldCost", "extraOutcomeRate"],
+                      record_prefix="bp_")
       .query("itemId in @INCLUDED_ITEMS")
       .assign(craft_lmd_value = lambda df: df["goldCost"] * LMD_SANITY_VALUE)
-      .assign(total_bp_weight = lambda df: df.groupby("itemId")["bp_weight"].transform("sum"))
-      .assign(bp_sanity_coeff = lambda df: BYPRODUCT_RATEUP * df["extraOutcomeRate"] * df["bp_weight"] / df["total_bp_weight"])
-      .pivot(index=["itemId", "craft_lmd_value"], columns="bp_itemId", values="bp_sanity_coeff")
+      .assign(total_bp_weight = lambda df: df.groupby("itemId")["bp_weight"]
+                                             .transform("sum"))
+      .assign(bp_sanity_coeff = lambda df: BYPRODUCT_RATEUP *
+                                           df["extraOutcomeRate"] *
+                                           df["bp_weight"] /
+                                           df["total_bp_weight"])
+      .pivot(index=["itemId", "count", "craft_lmd_value"],
+             columns="bp_itemId",
+             values="bp_sanity_coeff")
       .reindex(columns=INCLUDED_ITEMS)
 )
 
-def fill_ones(df):
-    for id in df.index:
-        df.at[id, id] = 1
-    return df
-
-recipe_matrix = (
-    pd.json_normalize(recipes, record_path="costs", meta="itemId")
+ingredient_matrix = (
+    pd.json_normalize(recipes,
+                      record_path="costs",
+                      meta="itemId")
       .query("itemId in @INCLUDED_ITEMS")
-      .pivot(index="itemId", columns="id", values="count")
-      .pipe(lambda df: pd.concat([df, pd.DataFrame(EXP_CARD_RELATION).set_index("itemId")]))
+      .pivot(index="itemId",
+             columns="id",
+             values="count")
       .reindex(columns=INCLUDED_ITEMS)
       .pipe(lambda df: -df)
-      .pipe(fill_ones)
+      .pipe(fill_diagonal,
+            recipe_data.index.get_level_values("count"))
       .to_numpy(na_value=0)
 )
 
-drop_matrix = drop_matrix.to_numpy(na_value=0)
-obj = -drop_matrix.sum(axis=0)
-craft_matrix = recipe_matrix + pad(recipe_data.to_numpy(na_value=0), pad_width=[(0, len(EXP_CARD_RELATION)), (0, 0)], mode="constant")
-craft_lmd_values = pad(recipe_data.index.get_level_values("craft_lmd_value").to_numpy(), pad_width=(0, len(EXP_CARD_RELATION)), mode="constant")
+stage_drops, sanity_profit = finalize_drops(drop_matrix)
+item_equiv_matrix = ingredient_matrix + recipe_data.to_numpy(na_value=0)
+craft_lmd_values = recipe_data.index.get_level_values("craft_lmd_value").to_numpy()
 
 sanity_values = (
-    linprog(obj, drop_matrix, sanity_costs, craft_matrix, craft_lmd_values)
+    linprog(sanity_profit, stage_drops, sanity_costs, item_equiv_matrix, craft_lmd_values)
     .x
 )
-# remember to devalue exp based on base production
+
+sanity_values = {item_id: sanity_value for item_id, sanity_value in zip(INCLUDED_ITEMS, sanity_values)}
