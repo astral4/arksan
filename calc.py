@@ -81,11 +81,12 @@ recipe_matrix = (
       .to_numpy(na_value=0)
 )
 
-const_mat = drop_matrix.to_numpy(na_value=0)
-obj_vec = -const_mat.sum(axis=0)
-const_vec = sanity_costs
+drop_matrix = drop_matrix.to_numpy(na_value=0)
+obj = -drop_matrix.sum(axis=0)
+craft_matrix = recipe_matrix + recipe_data.to_numpy(na_value=0)
+craft_lmd_values = recipe_data.index.get_level_values("craft_lmd_value").to_numpy()
 
 sanity_values = (
-    linprog(obj_vec, const_mat, const_vec)
+    linprog(obj, drop_matrix, sanity_costs, craft_matrix, craft_lmd_values)
     .x
 )
