@@ -41,7 +41,6 @@ drop_matrix = (
       .assign(drop_rate = lambda df: df["quantity"] / df["times"])
       .pivot(index="stageId", columns="itemId", values="drop_rate")
       .reindex(columns=INCLUDED_ITEMS)
-      .fillna(0) # do this in the to_numpy() method instead
       .pipe(fix_stage_ids)
 )
 
@@ -54,6 +53,7 @@ sanity_costs = (
       .set_index("stageId")
       .pipe(patch_sanity_cost)
       .reindex(drop_matrix.index)
+      .to_numpy()
 )
 
 recipe_data = (
@@ -77,13 +77,13 @@ recipe_matrix = (
       .pivot(index="itemId", columns="id", values="count")
       .reindex(columns=INCLUDED_ITEMS)
       .pipe(lambda df: -df)
-      .fillna(0)
       .pipe(fill_ones)
+      .to_numpy(na_value=0)
 )
 
-const_mat = drop_matrix.to_numpy()
+const_mat = drop_matrix.to_numpy(na_value=0)
 obj_vec = -const_mat.sum(axis=0)
-const_vec = sanity_costs.to_numpy()
+const_vec = sanity_costs
 
 sanity_values = (
     linprog(obj_vec, const_mat, const_vec)
