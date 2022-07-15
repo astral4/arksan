@@ -12,3 +12,4 @@ STAGE_AP_COST = {
     "a003_f03": 15,
     "a003_f04": 18,
 }
+LMD_SANITY_VALUE = 36/10000 # CE-6
