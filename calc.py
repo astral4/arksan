@@ -3,26 +3,6 @@ import requests
 import pandas as pd
 from scipy.optimize import linprog
 
-drops = (
-    requests.get(DROP_URL)
-            .json()
-            ["matrix"]
-)
-
-stages = (
-    requests.get(STAGE_URL)
-            .json()
-            ["stages"]
-            .values()
-)
-
-recipes = (
-    requests.get(RECIPE_URL)
-            .json()
-            ["workshopFormulas"]
-            .values()
-)
-
 def filter_stages(stage_ids):
     return (stage_ids.str.startswith(("main", "sub", "wk"))
           | stage_ids.str.endswith("perm")
@@ -31,6 +11,21 @@ def filter_stages(stage_ids):
 def fix_stage_ids(df):
     df.index = df.index.str.removesuffix("_perm")
     return df
+
+def patch_sanity_cost(df):
+    df.loc[STAGE_AP_COST.keys(), "apCost"] = list(STAGE_AP_COST.values())
+    return df
+
+def fill_ones(df):
+    for id in df.index:
+        df.at[id, id] = 1
+    return df
+
+drops = (
+    requests.get(DROP_URL)
+            .json()
+            ["matrix"]
+)
 
 drop_matrix = (
     pd.DataFrame(drops, columns=["stageId", "itemId", "times", "quantity"])
@@ -43,9 +38,12 @@ drop_matrix = (
       .pipe(fix_stage_ids)
 )
 
-def patch_sanity_cost(df):
-    df.loc[STAGE_AP_COST.keys(), "apCost"] = list(STAGE_AP_COST.values())
-    return df
+stages = (
+    requests.get(STAGE_URL)
+            .json()
+            ["stages"]
+            .values()
+)
 
 sanity_costs = (
     pd.DataFrame(stages, columns=["stageId", "apCost"])
@@ -53,6 +51,13 @@ sanity_costs = (
       .pipe(patch_sanity_cost)
       .reindex(drop_matrix.index)
       .to_numpy()
+)
+
+recipes = (
+    requests.get(RECIPE_URL)
+            .json()
+            ["workshopFormulas"]
+            .values()
 )
 
 recipe_data = (
@@ -64,11 +69,6 @@ recipe_data = (
       .pivot(index=["itemId", "craft_lmd_value"], columns="bp_itemId", values="bp_sanity_coeff")
       .reindex(columns=INCLUDED_ITEMS)
 )
-
-def fill_ones(df):
-    for id in df.index:
-        df.at[id, id] = 1
-    return df
 
 recipe_matrix = (
     pd.json_normalize(recipes, record_path="costs", meta="itemId")
@@ -89,4 +89,3 @@ sanity_values = (
     linprog(obj, drop_matrix, sanity_costs, craft_matrix, craft_lmd_values)
     .x
 )
-print(sanity_values)
