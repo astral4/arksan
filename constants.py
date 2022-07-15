@@ -9,8 +9,8 @@ INCLUDED_ITEMS = (
     "3301", "3302", "3303", # skillbooks
 )
 STAGE_AP_COST = {
-    "a003_f03": 15,
-    "a003_f04": 18,
+    "a003_f03": 15, # OF-F3
+    "a003_f04": 18, # OF-F4
 }
 LMD_SANITY_VALUE = 36/10000 # CE-6
 BYPRODUCT_RATEUP = 1.8
