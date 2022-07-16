@@ -31,7 +31,7 @@ def finalize_drops(df):
     return matrix, -matrix.sum(axis=0)
 
 drops = (
-    requests.get(DROP_URL)
+    requests.get(DROPS_URL)
             .json()
             ["matrix"]
 )
@@ -52,7 +52,7 @@ drop_data = (
 )
 
 stages = (
-    requests.get(STAGE_URL)
+    requests.get(STAGES_URL)
             .json()
             ["stages"]
             .values()
@@ -66,7 +66,7 @@ stage_sanity_costs = (
 )
 
 recipes = (
-    requests.get(RECIPE_URL)
+    requests.get(RECIPES_URL)
             .json()
             ["workshopFormulas"]
             .values()
