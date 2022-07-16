@@ -45,6 +45,8 @@ char_upgrade_costs = (
 
 sanity_costs = defaultdict(float)
 
-for char_data, upgrade_cost in char_upgrade_costs.iterrows():
+for char_data, upgrade_cost in char_upgrade_costs.head().iterrows():
     char_name, debut_time = char_data
     sanity_costs[char_name] = upgrade_cost.to_numpy(na_value=0).dot(get_sanity_values(debut_time))
+
+print(sanity_costs)
