@@ -14,7 +14,6 @@ def filter_stages(stage_ids):
 
 def trim_stage_ids(df):
     df.index = df.index.str.removesuffix("_perm")
-    #df.loc[df.index.get_level_values("stageId"), :] = df.index.get_level_values("stageId").str.removesuffix("_perm")
     return df
 
 def patch_stage_costs(df):
@@ -37,19 +36,18 @@ drops = (
             ["matrix"]
 )
 
-drop_matrix = (
+drop_data = (
     pd.DataFrame(drops,
                  columns=["stageId", "itemId", "times", "quantity", "start"])
     .query("times >= @MIN_RUN_THRESHOLD and \
             itemId in @INCLUDED_ITEMS")
-    .pipe(unix_to_dt)
     .pipe(lambda df: df[filter_stages(df["stageId"])])
+    .pipe(unix_to_dt)
     .assign(drop_rate = lambda df: df["quantity"] / df["times"])
-    .pivot(index="stageId",
+    .pivot(index=["stageId", "start"],
            columns="itemId",
            values="drop_rate")
     .reindex(columns=INCLUDED_ITEMS)
-    .pipe(trim_stage_ids)
 )
 
 stages = (
@@ -59,7 +57,7 @@ stages = (
             .values()
 )
 
-sanity_costs = (
+stage_sanity_costs = (
     pd.DataFrame(stages,
                 columns=["stageId", "apCost"])
       .set_index("stageId")
@@ -112,12 +110,16 @@ craft_lmd_values = recipe_data.index.get_level_values("craft_lmd_value").to_nump
 
 def get_sanity_values(time):
     drop_matrix = (
-        drop_matrix.query("start <= @time")
+        drop_data.reset_index()
+                 .query("start <= @time")
+                 .drop(columns="start")
+                 .set_index("stageId")
+                 .pipe(trim_stage_ids)
     )
 
     sanity_costs = (
-        sanity_costs.reindex(drop_matrix.index)
-                    .to_numpy()
+        stage_sanity_costs.reindex(drop_matrix.index)
+                          .to_numpy()
     )
 
     stage_drops, sanity_profit = finalize_drops(drop_matrix)
