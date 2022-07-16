@@ -97,21 +97,21 @@ ingredient_matrix = (
       .pipe(lambda df: -df)
 )
 
-def get_sanity_values(datetime):
+def get_sanity_values(datetime, items):
     drop_matrix = (
         drop_data.query("start <= @datetime")
-                 .reindex(columns=INCLUDED_ITEMS)
+                 .reindex(columns=items)
                  .reset_index(level="start", drop=True)
     )
 
     byproduct_matrix = (
-        recipe_data.query("itemId in @INCLUDED_ITEMS")
-                   .reindex(columns=INCLUDED_ITEMS)
+        recipe_data.query("itemId in @items")
+                   .reindex(columns=items)
     )
 
     recipe_matrix = (
-        ingredient_matrix.query("itemId in @INCLUDED_ITEMS")
-                         .reindex(columns=INCLUDED_ITEMS)
+        ingredient_matrix.query("itemId in @items")
+                         .reindex(columns=items)
                          .pipe(fill_diagonal,
                                byproduct_matrix.index.get_level_values("count"))
                          .to_numpy(na_value=0)
@@ -123,7 +123,6 @@ def get_sanity_values(datetime):
     )
 
     stage_drops, sanity_profit = finalize_drops(drop_matrix)
-
     item_equiv_matrix = recipe_matrix + byproduct_matrix.to_numpy(na_value=0)
     craft_lmd_values = byproduct_matrix.index.get_level_values("craft_lmd_value").to_numpy()
 
