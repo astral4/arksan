@@ -72,7 +72,6 @@ recipe_data = (
                       record_path="extraOutcomeGroup",
                       meta=["itemId", "count", "goldCost", "extraOutcomeRate"],
                       record_prefix="bp_")
-      .query("itemId in @INCLUDED_ITEMS")
       .assign(craft_lmd_value = lambda df: LMD_SANITY_VALUE * df["goldCost"])
       .assign(total_bp_weight = lambda df: df.groupby("itemId")["bp_weight"]
                                              .transform("sum"))
@@ -109,7 +108,10 @@ def get_sanity_values(datetime):
                  .set_index("stageId")
     )
 
-    byproduct_matrix = recipe_data.reindex(columns=INCLUDED_ITEMS)
+    byproduct_matrix = (
+        recipe_data.query("itemId in @INCLUDED_ITEMS")
+                   .reindex(columns=INCLUDED_ITEMS)
+    )
 
     recipe_matrix = (
         ingredient_matrix.reindex(columns=INCLUDED_ITEMS)
