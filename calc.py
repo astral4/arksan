@@ -85,6 +85,15 @@ ingredient_matrix = (
       .to_numpy(na_value=0)
 )
 
+char_debut_dates = (
+    pd.read_html(OPERATOR_URL,
+                 converters={"国服上线时间": dateparser.parse})
+      [0]
+      .set_index("干员")
+      .query("稀有度 == 6")
+      .drop(columns=["稀有度", "国服上线途径", "主要获得方式", "干员预告"])
+)
+
 drop_matrix = (
     pd.DataFrame(drops,
                  columns=["stageId", "itemId", "times", "quantity", "start"])
