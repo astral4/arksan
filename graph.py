@@ -24,4 +24,7 @@ char_upgrade_costs = (
                       meta=["appellation", ["phases", "maxLevel"]],
                       sep="_")
       .query("phases_maxLevel == 90")
+      .pivot(index="appellation",
+             columns="id",
+             values="count")
 )
