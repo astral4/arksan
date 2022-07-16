@@ -31,34 +31,10 @@ def finalize_drops(df):
     matrix = df.to_numpy(na_value=0)
     return matrix, -matrix.sum(axis=0)
 
-char_debut_dates = (
-    pd.read_html(OPERATOR_URL,
-                 converters={"国服上线时间": dateparser.parse})
-      [0]
-      .set_index("干员")
-      .query("稀有度 == 6")
-      .drop(columns=["稀有度", "国服上线途径", "主要获得方式", "干员预告"])
-)
-
 drops = (
     requests.get(DROP_URL)
             .json()
             ["matrix"]
-)
-
-drop_matrix = (
-    pd.DataFrame(drops,
-                 columns=["stageId", "itemId", "times", "quantity", "start"])
-      .pipe(unix_to_dt)
-      .query("times >= @MIN_RUN_THRESHOLD and \
-              itemId in @INCLUDED_ITEMS")
-      .pipe(lambda df: df[filter_stages(df["stageId"])])
-      .assign(drop_rate = lambda df: df["quantity"] / df["times"])
-      .pivot(index="stageId",
-             columns="itemId",
-             values="drop_rate")
-      .reindex(columns=INCLUDED_ITEMS)
-      .pipe(trim_stage_ids)
 )
 
 stages = (
@@ -66,15 +42,6 @@ stages = (
             .json()
             ["stages"]
             .values()
-)
-
-sanity_costs = (
-    pd.DataFrame(stages,
-                 columns=["stageId", "apCost"])
-      .set_index("stageId")
-      .pipe(patch_stage_costs)
-      .reindex(drop_matrix.index)
-      .to_numpy()
 )
 
 recipes = (
@@ -116,6 +83,39 @@ ingredient_matrix = (
       .pipe(fill_diagonal,
             recipe_data.index.get_level_values("count"))
       .to_numpy(na_value=0)
+)
+
+char_debut_dates = (
+    pd.read_html(OPERATOR_URL,
+                 converters={"国服上线时间": dateparser.parse})
+      [0]
+      .set_index("干员")
+      .query("稀有度 == 6")
+      .drop(columns=["稀有度", "国服上线途径", "主要获得方式", "干员预告"])
+)
+
+drop_matrix = (
+    pd.DataFrame(drops,
+                 columns=["stageId", "itemId", "times", "quantity", "start"])
+      .pipe(unix_to_dt)
+      .query("times >= @MIN_RUN_THRESHOLD and \
+              itemId in @INCLUDED_ITEMS")
+      .pipe(lambda df: df[filter_stages(df["stageId"])])
+      .assign(drop_rate = lambda df: df["quantity"] / df["times"])
+      .pivot(index="stageId",
+             columns="itemId",
+             values="drop_rate")
+      .reindex(columns=INCLUDED_ITEMS)
+      .pipe(trim_stage_ids)
+)
+
+sanity_costs = (
+    pd.DataFrame(stages,
+                 columns=["stageId", "apCost"])
+      .set_index("stageId")
+      .pipe(patch_stage_costs)
+      .reindex(drop_matrix.index)
+      .to_numpy()
 )
 
 stage_drops, sanity_profit = finalize_drops(drop_matrix)
