@@ -117,14 +117,14 @@ def get_sanity_values(datetime):
                          .to_numpy(na_value=0)
     )
 
-    item_equiv_matrix = recipe_matrix + byproduct_matrix.to_numpy(na_value=0)
-    craft_lmd_values = byproduct_matrix.index.get_level_values("craft_lmd_value").to_numpy()
-
     sanity_costs = (
         stage_sanity_costs.reindex(drop_matrix.index)
                           .to_numpy()
     )
 
     stage_drops, sanity_profit = finalize_drops(drop_matrix)
+
+    item_equiv_matrix = recipe_matrix + byproduct_matrix.to_numpy(na_value=0)
+    craft_lmd_values = byproduct_matrix.index.get_level_values("craft_lmd_value").to_numpy()
 
     return linprog(sanity_profit, stage_drops, sanity_costs, item_equiv_matrix, craft_lmd_values).x
