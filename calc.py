@@ -109,17 +109,17 @@ def get_sanity_values(datetime):
                  .set_index("stageId")
     )
 
-    ordered_recipe_data = recipe_data.reindex(columns=INCLUDED_ITEMS)
+    byproduct_matrix = recipe_data.reindex(columns=INCLUDED_ITEMS)
 
-    real_ingredient_matrix = (
+    recipe_matrix = (
         ingredient_matrix.reindex(columns=INCLUDED_ITEMS)
                          .pipe(fill_diagonal,
-                               ordered_recipe_data.index.get_level_values("count"))
+                               byproduct_matrix.index.get_level_values("count"))
                          .to_numpy(na_value=0)
     )
 
-    item_equiv_matrix = real_ingredient_matrix + ordered_recipe_data.to_numpy(na_value=0)
-    craft_lmd_values = ordered_recipe_data.index.get_level_values("craft_lmd_value").to_numpy()
+    item_equiv_matrix = recipe_matrix + byproduct_matrix.to_numpy(na_value=0)
+    craft_lmd_values = byproduct_matrix.index.get_level_values("craft_lmd_value").to_numpy()
 
     sanity_costs = (
         stage_sanity_costs.reindex(drop_matrix.index)
