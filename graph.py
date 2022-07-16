@@ -21,10 +21,13 @@ chars = (
 char_upgrade_costs = (
     pd.json_normalize(chars,
                       record_path=["phases", "evolveCost"],
-                      meta=["appellation", ["phases", "maxLevel"]],
+                      meta=["name", "appellation", ["phases", "maxLevel"]],
                       sep="_")
       .query("phases_maxLevel == 90")
-      .pivot(index="appellation",
+      .pivot(index=["name", "appellation"],
              columns="id",
              values="count")
+      .reset_index()
+      .set_index("name")
+      .reindex(index=char_debut_times.index)
 )
