@@ -99,11 +99,9 @@ ingredient_matrix = (
 
 def get_sanity_values(datetime):
     drop_matrix = (
-        drop_data.reindex(columns=INCLUDED_ITEMS)
-                 .reset_index()
-                 .query("start <= @datetime")
-                 .drop(columns="start")
-                 .set_index("stageId")
+        drop_data.query("start <= @datetime")
+                 .reindex(columns=INCLUDED_ITEMS)
+                 .reset_index(level="start", drop=True)
     )
 
     byproduct_matrix = (
