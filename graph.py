@@ -5,11 +5,16 @@ import requests
 from collections import defaultdict
 from calc import get_sanity_values
 
+def adjust_time(df):
+    df["国服上线时间"] += pd.Timedelta(hours=16)
+    return df
+
 char_debut_times = (
     pd.read_html(CHAR_DEBUT_TIMES_URL,
                  converters={"国服上线时间": dateparser.parse})
       [0]
       .drop(columns=["稀有度", "国服上线途径", "主要获得方式", "干员预告"])
+      .pipe(adjust_time)
 )
 
 chars = (
