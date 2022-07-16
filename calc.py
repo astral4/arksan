@@ -39,16 +39,11 @@ drops = (
 drop_data = (
     pd.DataFrame(drops,
                  columns=["stageId", "itemId", "times", "quantity", "start"])
-    .query("times >= @MIN_RUN_THRESHOLD and \
-            itemId in @INCLUDED_ITEMS")
+    .query("times >= @MIN_RUN_THRESHOLD")
     .pipe(lambda df: df[filter_stages(df["stageId"])])
     .pipe(trim_stage_ids)
     .pipe(unix_to_dt)
     .assign(drop_rate = lambda df: df["quantity"] / df["times"])
-    .pivot(index=["stageId", "start"],
-           columns="itemId",
-           values="drop_rate")
-    .reindex(columns=INCLUDED_ITEMS)
 )
 
 stages = (
@@ -88,7 +83,6 @@ recipe_data = (
       .pivot(index=["itemId", "count", "craft_lmd_value"],
              columns="bp_itemId",
              values="bp_sanity_coeff")
-      .reindex(columns=INCLUDED_ITEMS)
 )
 
 ingredient_matrix = (
@@ -99,23 +93,33 @@ ingredient_matrix = (
       .pivot(index="itemId",
              columns="id",
              values="count")
-      .reindex(columns=INCLUDED_ITEMS)
       .pipe(lambda df: -df)
-      .pipe(fill_diagonal,
-            recipe_data.index.get_level_values("count"))
-      .to_numpy(na_value=0)
 )
-
-item_equiv_matrix = ingredient_matrix + recipe_data.to_numpy(na_value=0)
-craft_lmd_values = recipe_data.index.get_level_values("craft_lmd_value").to_numpy()
 
 def get_sanity_values(datetime):
     drop_matrix = (
-        drop_data.reset_index()
+        drop_data.query("itemId in @INCLUDED_ITEMS")
+                 .pivot(index=["stageId", "start"],
+                        columns="itemId",
+                        values="drop_rate")
+                 .reindex(columns=INCLUDED_ITEMS)
+                 .reset_index()
                  .query("start <= @datetime")
                  .drop(columns="start")
                  .set_index("stageId")
     )
+
+    ordered_recipe_data = recipe_data.reindex(columns=INCLUDED_ITEMS)
+
+    real_ingredient_matrix = (
+        ingredient_matrix.reindex(columns=INCLUDED_ITEMS)
+                         .pipe(fill_diagonal,
+                               ordered_recipe_data.index.get_level_values("count"))
+                         .to_numpy(na_value=0)
+    )
+
+    item_equiv_matrix = real_ingredient_matrix + ordered_recipe_data.to_numpy(na_value=0)
+    craft_lmd_values = ordered_recipe_data.index.get_level_values("craft_lmd_value").to_numpy()
 
     sanity_costs = (
         stage_sanity_costs.reindex(drop_matrix.index)
