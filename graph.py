@@ -3,7 +3,7 @@ import pandas as pd
 import dateparser
 import requests
 from collections import defaultdict
-import calc
+from calc import get_sanity_values
 
 def adjust_time(df):
     df["国服上线时间"] += pd.Timedelta(hours=16)
@@ -53,6 +53,9 @@ for (char_name, debut_time), upgrade_cost in char_upgrade_costs.iterrows():
     if debut_time < pd.to_datetime("2021-09-17 08:00:00"): # ch9
         upgrade_cost = upgrade_cost.drop(labels=["31043", "31044", "31053", "31054"])
 
-    sanity_costs[char_name] = upgrade_cost.to_numpy(na_value=0).dot(calc.get_sanity_values(debut_time, upgrade_cost.index.to_numpy()))
+    sanity_costs[char_name] = (
+        upgrade_cost.to_numpy(na_value=0)
+                    .dot(get_sanity_values(debut_time, upgrade_cost.index.to_numpy()))
+    )
 
 print(sanity_costs)
