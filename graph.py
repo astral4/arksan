@@ -19,6 +19,9 @@ chars = (
 )
 
 char_upgrade_costs = (
-    pd.json_normalize(chars, record_path=["phases", "evolveCost"], meta=["appellation", ["phases", "maxLevel"]], sep="_")
+    pd.json_normalize(chars,
+                      record_path=["phases", "evolveCost"],
+                      meta=["appellation", ["phases", "maxLevel"]],
+                      sep="_")
       .query("phases_maxLevel == 90")
 )
