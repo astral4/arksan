@@ -17,3 +17,7 @@ chars = (
             .json()
             .values()
 )
+
+char_upgrade_costs = (
+    pd.json_normalize(chars, record_path=["phases", "evolveCost"], meta=["appellation", ["phases", "maxLevel"]])
+)
