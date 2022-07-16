@@ -109,10 +109,10 @@ ingredient_matrix = (
 item_equiv_matrix = ingredient_matrix + recipe_data.to_numpy(na_value=0)
 craft_lmd_values = recipe_data.index.get_level_values("craft_lmd_value").to_numpy()
 
-def get_sanity_values(time):
+def get_sanity_values(datetime):
     drop_matrix = (
         drop_data.reset_index()
-                 .query("start <= @time")
+                 .query("start <= @datetime")
                  .drop(columns="start")
                  .set_index("stageId")
     )
@@ -129,4 +129,4 @@ def get_sanity_values(time):
         .x
     )
 
-    return {item_id: sanity_value for item_id, sanity_value in zip(INCLUDED_ITEMS, sanity_values)}
+    return {item_id: value for item_id, value in zip(INCLUDED_ITEMS, sanity_values)}
