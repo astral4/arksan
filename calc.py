@@ -4,7 +4,7 @@ import pandas as pd
 from scipy.optimize import linprog
 
 def unix_to_dt(df):
-    df[["start", "end"]] = df[["start", "end"]].apply(pd.to_datetime, unit="ms")
+    df["start"] = pd.to_datetime(df["start"], unit="ms")
     return df
 
 def filter_stages(stage_ids):
@@ -37,8 +37,8 @@ drops = (
 )
 
 drop_matrix = (
-    pd.DataFrame(drops)
-      .drop(columns="stdDev")
+    pd.DataFrame(drops,
+                 columns=["stageId", "itemId", "times", "quantity", "start"])
       .pipe(unix_to_dt)
       .query("times >= @MIN_RUN_THRESHOLD and \
               itemId in @INCLUDED_ITEMS")
