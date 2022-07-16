@@ -43,6 +43,13 @@ stages = (
             .values()
 )
 
+sanity_costs = (
+    pd.DataFrame(stages,
+                columns=["stageId", "apCost"])
+      .set_index("stageId")
+      .pipe(patch_stage_costs)
+)
+
 recipes = (
     requests.get(RECIPE_URL)
             .json()
@@ -84,37 +91,36 @@ ingredient_matrix = (
       .to_numpy(na_value=0)
 )
 
-drop_matrix = (
-    pd.DataFrame(drops,
-                 columns=["stageId", "itemId", "times", "quantity", "start"])
-      .pipe(unix_to_dt)
-      .query("times >= @MIN_RUN_THRESHOLD and \
-              itemId in @INCLUDED_ITEMS")
-      .pipe(lambda df: df[filter_stages(df["stageId"])])
-      .assign(drop_rate = lambda df: df["quantity"] / df["times"])
-      .pivot(index="stageId",
-             columns="itemId",
-             values="drop_rate")
-      .reindex(columns=INCLUDED_ITEMS)
-      .pipe(trim_stage_ids)
-)
-
-sanity_costs = (
-    pd.DataFrame(stages,
-                 columns=["stageId", "apCost"])
-      .set_index("stageId")
-      .pipe(patch_stage_costs)
-      .reindex(drop_matrix.index)
-      .to_numpy()
-)
-
-stage_drops, sanity_profit = finalize_drops(drop_matrix)
 item_equiv_matrix = ingredient_matrix + recipe_data.to_numpy(na_value=0)
 craft_lmd_values = recipe_data.index.get_level_values("craft_lmd_value").to_numpy()
 
-sanity_values = (
-    linprog(sanity_profit, stage_drops, sanity_costs, item_equiv_matrix, craft_lmd_values)
-    .x
-)
+def get_sanity_values(time):
+    drop_matrix = (
+        pd.DataFrame(drops,
+                    columns=["stageId", "itemId", "times", "quantity", "start"])
+        .pipe(unix_to_dt)
+        .query("times >= @MIN_RUN_THRESHOLD and \
+                start <= @time and \
+                itemId in @INCLUDED_ITEMS")
+        .pipe(lambda df: df[filter_stages(df["stageId"])])
+        .assign(drop_rate = lambda df: df["quantity"] / df["times"])
+        .pivot(index="stageId",
+                columns="itemId",
+                values="drop_rate")
+        .reindex(columns=INCLUDED_ITEMS)
+        .pipe(trim_stage_ids)
+    )
 
-sanity_values = {item_id: sanity_value for item_id, sanity_value in zip(INCLUDED_ITEMS, sanity_values)}
+    sanity_costs = (
+        sanity_costs.reindex(drop_matrix.index)
+                    .to_numpy()
+    )
+
+    stage_drops, sanity_profit = finalize_drops(drop_matrix)
+
+    sanity_values = (
+        linprog(sanity_profit, stage_drops, sanity_costs, item_equiv_matrix, craft_lmd_values)
+        .x
+    )
+
+    return {item_id: sanity_value for item_id, sanity_value in zip(INCLUDED_ITEMS, sanity_values)}
