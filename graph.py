@@ -2,6 +2,8 @@ from constants import *
 import pandas as pd
 import dateparser
 import requests
+from collections import defaultdict
+from calc import get_sanity_values
 
 char_debut_times = (
     pd.read_html(CHAR_DEBUT_TIMES_URL,
@@ -34,5 +36,10 @@ char_upgrade_costs = (
       .set_index(["appellation", "国服上线时间"])
       .sort_index(level="国服上线时间")
       .reindex(columns=INCLUDED_ITEMS)
-      .fillna(0)
 )
+
+sanity_costs = defaultdict()
+
+for char_data, upgrade_cost in char_upgrade_costs.iterrows():
+    char_name, debut_time = char_data
+    sanity_costs[char_name] = upgrade_cost.to_numpy(na_value=0).dot(get_sanity_values(debut_time))
