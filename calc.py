@@ -124,9 +124,4 @@ def get_sanity_values(datetime):
 
     stage_drops, sanity_profit = finalize_drops(drop_matrix)
 
-    sanity_values = (
-        linprog(sanity_profit, stage_drops, sanity_costs, item_equiv_matrix, craft_lmd_values)
-        .x
-    )
-
-    return {item_id: value for item_id, value in zip(INCLUDED_ITEMS, sanity_values)}
+    return linprog(sanity_profit, stage_drops, sanity_costs, item_equiv_matrix, craft_lmd_values).x
