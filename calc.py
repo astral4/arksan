@@ -3,10 +3,6 @@ import requests
 import pandas as pd
 from scipy.optimize import linprog
 
-def unix_to_dt(df):
-    df["start"] = pd.to_datetime(df["start"], unit="ms")
-    return df
-
 def filter_stages(stage_ids):
     return (stage_ids.str.startswith(("main", "sub", "wk"))
           | stage_ids.str.endswith("perm")
@@ -14,6 +10,10 @@ def filter_stages(stage_ids):
 
 def trim_stage_ids(df):
     df["stageId"] = df["stageId"].str.removesuffix("_perm")
+    return df
+
+def unix_to_dt(df):
+    df["start"] = pd.to_datetime(df["start"], unit="ms")
     return df
 
 def patch_stage_costs(df):
@@ -78,7 +78,7 @@ recipe_data = (
                       meta=["itemId", "count", "goldCost", "extraOutcomeRate"],
                       record_prefix="bp_")
       .query("itemId in @INCLUDED_ITEMS")
-      .assign(craft_lmd_value = lambda df: df["goldCost"] * LMD_SANITY_VALUE)
+      .assign(craft_lmd_value = lambda df: LMD_SANITY_VALUE * df["goldCost"])
       .assign(total_bp_weight = lambda df: df.groupby("itemId")["bp_weight"]
                                              .transform("sum"))
       .assign(bp_sanity_coeff = lambda df: BYPRODUCT_RATEUP *
@@ -109,7 +109,7 @@ ingredient_matrix = (
 item_equiv_matrix = ingredient_matrix + recipe_data.to_numpy(na_value=0)
 craft_lmd_values = recipe_data.index.get_level_values("craft_lmd_value").to_numpy()
 
-def get_sanity_values(time=0):
+def get_sanity_values(time):
     drop_matrix = (
         drop_data.reset_index()
                  .query("start <= @time")
