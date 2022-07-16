@@ -91,7 +91,6 @@ ingredient_matrix = (
     pd.json_normalize(recipes,
                       record_path="costs",
                       meta="itemId")
-      .query("itemId in @INCLUDED_ITEMS")
       .pivot(index="itemId",
              columns="id",
              values="count")
@@ -113,7 +112,8 @@ def get_sanity_values(datetime):
     )
 
     recipe_matrix = (
-        ingredient_matrix.reindex(columns=INCLUDED_ITEMS)
+        ingredient_matrix.query("itemId in @INCLUDED_ITEMS")
+                         .reindex(columns=INCLUDED_ITEMS)
                          .pipe(fill_diagonal,
                                byproduct_matrix.index.get_level_values("count"))
                          .to_numpy(na_value=0)
