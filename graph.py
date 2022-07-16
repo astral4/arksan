@@ -43,7 +43,7 @@ char_upgrade_costs = (
       .reindex(columns=INCLUDED_ITEMS)
 )
 
-sanity_costs = defaultdict()
+sanity_costs = defaultdict(float)
 
 for char_data, upgrade_cost in char_upgrade_costs.iterrows():
     char_name, debut_time = char_data
