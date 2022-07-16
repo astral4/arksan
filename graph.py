@@ -30,6 +30,7 @@ char_upgrade_costs = (
       .drop(columns=["name", "干员"])
       .set_index(["appellation", "国服上线时间"])
       .sort_index(level="国服上线时间")
+      .fillna(0)
 )
 
 print(char_upgrade_costs)
