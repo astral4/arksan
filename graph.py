@@ -26,7 +26,10 @@ char_upgrade_costs = (
              columns="id",
              values="count")
       .reset_index()
-      .merge(char_debut_times, how="left", left_on="name", right_on="干员")
+      .merge(char_debut_times,
+             how="left",
+             left_on="name",
+             right_on="干员")
       .drop(columns=["name", "干员"])
       .set_index(["appellation", "国服上线时间"])
       .sort_index(level="国服上线时间")
