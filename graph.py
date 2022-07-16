@@ -45,9 +45,7 @@ char_upgrade_costs = (
 
 sanity_costs = defaultdict(float)
 
-for char_data, upgrade_cost in char_upgrade_costs.iterrows():
-    char_name, debut_time = char_data
-    
+for (char_name, debut_time), upgrade_cost in char_upgrade_costs.iterrows():
     if debut_time < pd.to_datetime("2019-12-24 08:00:00"): # ch6
         upgrade_cost = upgrade_cost.drop(labels=["31013", "31014", "31023", "31024"])
     if debut_time < pd.to_datetime("2020-11-01 08:00:00"): # ch8
