@@ -44,9 +44,6 @@ drop_data = (
     .pipe(trim_stage_ids)
     .pipe(unix_to_dt)
     .assign(drop_rate = lambda df: df["quantity"] / df["times"])
-    .pivot(index=["stageId", "start"],
-           columns="itemId",
-           values="drop_rate")
 )
 
 stages = (
@@ -100,8 +97,10 @@ ingredient_matrix = (
 def get_sanity_values(datetime, items):
     drop_matrix = (
         drop_data.query("start <= @datetime")
+                 .pivot(index="stageId",
+                        columns="itemId",
+                        values="drop_rate")
                  .reindex(columns=items)
-                 .reset_index(level="start", drop=True)
     )
 
     byproduct_matrix = (
