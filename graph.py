@@ -25,6 +25,7 @@ char_upgrade_costs = (
     pd.json_normalize(chars,
                       record_path=["skills", "levelUpCostCond", "levelUpCost"],
                       meta=["name", "appellation", "rarity"])
+      .query("rarity == 5")
 )
 
 print(char_upgrade_costs)
