@@ -7,6 +7,10 @@ def adjust_time(df):
     df["国服上线时间"] += pd.Timedelta(hours=16)
     return df
 
+def drop_mastery_rank_level(df):
+    df.index = df.index.droplevel(level="skills_lvlUpCostCond_lvlUpTime")
+    return df
+
 char_debut_times = (
     pd.read_html(CHAR_DEBUT_TIMES_URL,
                  converters={"国服上线时间": dateparser.parse})
@@ -33,6 +37,8 @@ char_upgrade_costs = (
              columns="id",
              values="count")
       .fillna(0)
+      .groupby(["name", "appellation", "skills_skillId"])
+      .sum()
 )
 
 print(char_upgrade_costs)
