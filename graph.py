@@ -24,8 +24,15 @@ chars = (
 char_upgrade_costs = (
     pd.json_normalize(chars,
                       record_path=["skills", "levelUpCostCond", "levelUpCost"],
-                      meta=["name", "appellation", "rarity"])
+                      meta=["name", "appellation", "rarity",
+                            ["skills", "skillId"],
+                            ["skills", "lvlUpCostCond", "lvlUpTime"]],
+                      sep="_")
       .query("rarity == 5")
+      .pivot(index=["name", "appellation", "skills_skillId", "skills_lvlUpCostCond_lvlUpTime"],
+             columns="id",
+             values="count")
+      .fillna(0)
 )
 
 print(char_upgrade_costs)
