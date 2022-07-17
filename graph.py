@@ -7,10 +7,6 @@ def adjust_time(df):
     df["国服上线时间"] += pd.Timedelta(hours=16)
     return df
 
-def drop_mastery_rank_level(df):
-    df.index = df.index.droplevel(level="skills_lvlUpCostCond_lvlUpTime")
-    return df
-
 char_debut_times = (
     pd.read_html(CHAR_DEBUT_TIMES_URL,
                  converters={"国服上线时间": dateparser.parse})
@@ -33,12 +29,12 @@ char_upgrade_costs = (
                             ["skills", "lvlUpCostCond", "lvlUpTime"]],
                       sep="_")
       .query("rarity == 5")
-      .pivot(index=["name", "appellation", "skills_skillId", "skills_lvlUpCostCond_lvlUpTime"],
-             columns="id",
-             values="count")
-      .fillna(0)
-      .groupby(["name", "appellation", "skills_skillId"])
-      .sum()
+      .pipe(lambda df: pd.pivot_table(df,
+                                      index=["name", "appellation", "skills_skillId", "skills_lvlUpCostCond_lvlUpTime"],
+                                      columns="id",
+                                      values="count",
+                                      sort=False,
+                                      fill_value=0))
 )
 
 print(char_upgrade_costs)
