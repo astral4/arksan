@@ -43,4 +43,5 @@ char_upgrade_costs = (
       .reindex(columns=VALID_ITEMS)
 )
 
-print(char_upgrade_costs)
+for char_name, upgrade_costs in char_upgrade_costs.groupby(level="appellation", sort=False):
+    debut_time = upgrade_costs.index.unique(level="国服上线时间")
