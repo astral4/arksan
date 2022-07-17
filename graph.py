@@ -31,11 +31,9 @@ char_upgrade_costs = (
                             ["skills", "lvlUpCostCond", "lvlUpTime"]],
                       sep="_")
       .query("rarity == 5")
-      .pipe(lambda df: pd.pivot_table(df,
-                                      index=["name", "appellation", "skills_skillId", "skills_lvlUpCostCond_lvlUpTime"],
-                                      columns="id",
-                                      values="count",
-                                      fill_value=0))
+      .pivot(index=["name", "appellation", "skills_skillId", "skills_lvlUpCostCond_lvlUpTime"],
+             columns="id",
+             values="count")
       .groupby(["name", "appellation", "skills_skillId"])
       .sum()
       .reset_index(level="appellation")
