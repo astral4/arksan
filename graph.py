@@ -13,6 +13,8 @@ char_debut_times = (
       [0]
       .drop(columns=["稀有度", "国服上线途径", "主要获得方式", "干员预告"])
       .pipe(adjust_time)
+      .set_index("干员")
+      .rename_axis("name")
 )
 
 chars = (
@@ -37,6 +39,10 @@ char_upgrade_costs = (
                                       fill_value=0))
       .groupby(["name", "appellation", "skills_skillId"])
       .sum()
+      .reset_index(level="appellation")
+      .join(char_debut_times)
+      .set_index(["appellation", "国服上线时间"])
+      .sort_index(axis=0, level="国服上线时间")
 )
 
 print(char_upgrade_costs)
