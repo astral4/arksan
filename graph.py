@@ -35,6 +35,8 @@ char_upgrade_costs = (
                                       values="count",
                                       sort=False,
                                       fill_value=0))
+      .groupby(["name", "appellation", "skills_skillId"])
+      .sum()
 )
 
 print(char_upgrade_costs)
