@@ -35,7 +35,6 @@ char_upgrade_costs = (
                                       index=["name", "appellation", "skills_skillId", "skills_lvlUpCostCond_lvlUpTime"],
                                       columns="id",
                                       values="count",
-                                      sort=False,
                                       fill_value=0))
       .groupby(["name", "appellation", "skills_skillId"])
       .sum()
