@@ -23,7 +23,8 @@ chars = (
 
 char_upgrade_costs = (
     pd.json_normalize(chars,
-                      record_path=["phases", "evolveCost"],
-                      meta=["name", "appellation", ["phases", "maxLevel"]],
-                      sep="_")
+                      record_path=["skills", "levelUpCostCond", "levelUpCost"],
+                      meta=["name", "appellation", "rarity"])
 )
+
+print(char_upgrade_costs)
