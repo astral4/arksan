@@ -5,6 +5,7 @@ import requests
 from collections import defaultdict
 import calc
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 def adjust_time(df):
     df["国服上线时间"] += pd.Timedelta(hours=16)
@@ -71,8 +72,8 @@ mastery_costs = (
 )
 
 sns.set_theme(style="whitegrid", context="paper", palette=["#fb2c20", "#43c03b", "#3060a8"])
-sns.catplot(
-    data=mastery_costs, kind="bar",
-    x="value", y="operators", hue="skill",
-    alpha=.8, height=10, aspect=0.75
-).savefig("mastery_costs.png")
+graph = sns.catplot(data=mastery_costs, kind="bar",
+                    x="value", y="operators", hue="skill",
+                    alpha=.8, height=10, aspect=0.6)
+plt.xlim(3200, 4800)
+graph.savefig("mastery_costs.png")
