@@ -47,7 +47,7 @@ char_upgrade_costs = (
 
 sanity_costs = defaultdict()
 
-for char_name, upgrade_costs in char_upgrade_costs.head(9).groupby(level="appellation", sort=False):
+for char_name, upgrade_costs in char_upgrade_costs.groupby(level="appellation", sort=False):
     debut_time = upgrade_costs.index.get_level_values("国服上线时间")[0]
 
     if debut_time < pd.to_datetime("2019-12-24 08:00:00"): # ch6
@@ -59,3 +59,10 @@ for char_name, upgrade_costs in char_upgrade_costs.head(9).groupby(level="appell
 
     sanity_values = calc.get_sanity_values(debut_time, upgrade_costs.columns)
     sanity_costs[char_name] = upgrade_costs.to_numpy(na_value=0).dot(sanity_values)
+
+mastery_costs = (
+    pd.DataFrame(sanity_costs)
+      .set_axis([1, 2, 3])
+      .rename_axis("Skill Number", axis=0)
+      .rename_axis("Operators", axis=1)
+)
