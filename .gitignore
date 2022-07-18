@@ -2,4 +2,5 @@
 *.py[cod]
 *$py.class
 **/.DS_Store
-mastery_costs.png
+mastery_costs_bar.png
+mastery_costs_hist.png
