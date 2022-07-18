@@ -1,7 +1,16 @@
-from constants import *
 import requests
 import pandas as pd
 from scipy.optimize import linprog
+
+_MIN_RUN_THRESHOLD = 100
+
+_MISSING_STAGE_COSTS = {
+    "a003_f03": 15, # OF-F3
+    "a003_f04": 18, # OF-F4
+}
+_LMD_SANITY_VALUE = 36/10000 # sanity:LMD ratio of CE-6. The sanity value of LMD was 30/7500 (CE-5)
+                            # before 2022-05-01 08:00:00 GMT, but LMD value does not significantly affect results anyway
+_BYPRODUCT_RATE_BONUS = 1.8
 
 def _filter_stages(stage_ids):
     return (stage_ids.str.startswith(("main", "sub", "wk"))
@@ -17,7 +26,7 @@ def _unix_to_dt(df):
     return df
 
 def _patch_stage_costs(df):
-    stages, sanity_costs = zip(*MISSING_STAGE_COSTS.items())
+    stages, sanity_costs = zip(*_MISSING_STAGE_COSTS.items())
     df.loc[stages, "apCost"] = sanity_costs
     return df
 
@@ -31,7 +40,7 @@ def _finalize_drops(df):
     return matrix, -matrix.sum(axis=0)
 
 _drops = (
-    requests.get(DROPS_URL)
+    requests.get("https://penguin-stats.io/PenguinStats/api/v2/result/matrix")
             .json()
             ["matrix"]
 )
@@ -39,7 +48,7 @@ _drops = (
 _drop_data = (
     pd.DataFrame(_drops,
                  columns=["stageId", "itemId", "times", "quantity", "start"])
-    .query("times >= @MIN_RUN_THRESHOLD")
+    .query("times >= @_MIN_RUN_THRESHOLD")
     .pipe(lambda df: df[_filter_stages(df["stageId"])])
     .pipe(_trim_stage_ids)
     .pipe(_unix_to_dt)
@@ -50,7 +59,7 @@ _drop_data = (
 )
 
 _stages = (
-    requests.get(STAGES_URL)
+    requests.get("https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/stage_table.json")
             .json()
             ["stages"]
             .values()
@@ -64,7 +73,7 @@ _stage_sanity_costs = (
 )
 
 _recipes = (
-    requests.get(RECIPES_URL)
+    requests.get("https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/building_data.json")
             .json()
             ["workshopFormulas"]
             .values()
@@ -75,10 +84,10 @@ _recipe_data = (
                       record_path="extraOutcomeGroup",
                       meta=["itemId", "count", "goldCost", "extraOutcomeRate"],
                       record_prefix="bp_")
-      .assign(craft_lmd_value = lambda df: LMD_SANITY_VALUE * df["goldCost"])
+      .assign(craft_lmd_value = lambda df: _LMD_SANITY_VALUE * df["goldCost"])
       .assign(total_bp_weight = lambda df: df.groupby("itemId")["bp_weight"]
                                              .transform("sum"))
-      .assign(bp_sanity_coeff = lambda df: BYPRODUCT_RATE_BONUS *
+      .assign(bp_sanity_coeff = lambda df: _BYPRODUCT_RATE_BONUS *
                                            df["extraOutcomeRate"] *
                                            df["bp_weight"] /
                                            df["total_bp_weight"])
