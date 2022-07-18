@@ -64,23 +64,23 @@ for char_name, upgrade_costs in char_upgrade_costs.groupby(level="appellation", 
 mastery_costs = (
     pd.DataFrame(sanity_costs)
       .set_axis([1, 2, 3])
-      .rename_axis("skill", axis=0)
-      .rename_axis("operators", axis=1)
       .reset_index()
-      .melt(id_vars="skill")
+      .melt(id_vars="index")
+      .set_axis(["Skill", "Operator", "Sanity Cost"], axis=1)
 )
 
-sns.set_theme(style="whitegrid", context="paper", palette=["#fb2c20", "#43c03b", "#3060a8"])
-
+sns.set_theme(style="whitegrid", context="paper", palette=["#fb2c20", "#43c03b", "#3060a8"], font_scale=2)
 cost_bar = (
     sns.catplot(data=mastery_costs, kind="bar",
-                    x="value", y="operators", hue="skill",
-                    alpha=.8, height=10, aspect=0.6)
-       .set(xlim=(3200, 4800))
-       .savefig("mastery_costs_bar.png")
+                x="Operator", y="Sanity Cost", hue="Skill",
+                alpha=.8, height=10, aspect=4)
+       .set_xticklabels(rotation=90)
+       .set(ylim=(3200, 4800))
 )
+cost_bar.fig.suptitle("6* Operator Skill Mastery Costs", y=1.05)
+cost_bar.savefig("mastery_costs_bar.png", dpi=200)
 
-cost_hist = (
-    sns.displot(mastery_costs, x="value", color="#52ad9c", alpha=1, bins=20)
-       .savefig("mastery_costs_hist.png")
-)
+sns.set_theme(style="whitegrid", context="paper")
+cost_hist = sns.displot(mastery_costs, x="Sanity Cost", color="#52ad9c", alpha=1, bins=20, aspect=1.2)
+cost_hist.fig.suptitle("6* Operator Skill Mastery Costs", y=1.02)
+cost_hist.savefig("mastery_costs_hist.png", dpi=200)
