@@ -52,7 +52,7 @@ _char_upgrade_costs = (
       .join(_char_debut_times)
       .set_index(["appellation", "国服上线时间"])
       .sort_index(axis=0, level="国服上线时间")
-      .reindex(columns=calc.VALID_ITEMS)
+      .reindex(columns=VALID_ITEMS)
 )
 
 _sanity_costs = defaultdict()

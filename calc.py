@@ -8,14 +8,14 @@ _MISSING_STAGE_COSTS = {
     "a003_f03": 15, # OF-F3
     "a003_f04": 18, # OF-F4
 }
+
 _LMD_SANITY_VALUE = 36/10000 # sanity:LMD ratio of CE-6. The sanity value of LMD was 30/7500 (CE-5)
-                            # before 2022-05-01 08:00:00 GMT, but LMD value does not significantly affect results anyway
+                             # before 2022-05-01 08:00:00 GMT, but LMD value does not significantly affect results anyway
 _BYPRODUCT_RATE_BONUS = 1.8
 
 def _filter_stages(stage_ids):
-    return (stage_ids.str.startswith(("main", "sub", "wk"))
-          | stage_ids.str.endswith("perm")
-    )
+    return (stage_ids.str.startswith(("main", "sub", "wk")) |
+            stage_ids.str.endswith("perm"))
 
 def _trim_stage_ids(df):
     df["stageId"] = df["stageId"].str.removesuffix("_perm")
@@ -46,7 +46,7 @@ _drops = (
 )
 
 _drop_data = (
-    pd.DataFrame(_drops,
+    pd.DataFrame(data=_drops,
                  columns=["stageId", "itemId", "times", "quantity", "start"])
     .query("times >= @_MIN_RUN_THRESHOLD")
     .pipe(lambda df: df[_filter_stages(df["stageId"])])
@@ -66,8 +66,8 @@ _stages = (
 )
 
 _stage_sanity_costs = (
-    pd.DataFrame(_stages,
-                columns=["stageId", "apCost"])
+    pd.DataFrame(data=_stages,
+                 columns=["stageId", "apCost"])
       .set_index("stageId")
       .pipe(_patch_stage_costs)
 )
@@ -80,12 +80,13 @@ _recipes = (
 )
 
 _recipe_data = (
-    pd.json_normalize(_recipes,
+    pd.json_normalize(data=_recipes,
                       record_path="extraOutcomeGroup",
                       meta=["itemId", "count", "goldCost", "extraOutcomeRate"],
                       record_prefix="bp_")
       .assign(craft_lmd_value = lambda df: _LMD_SANITY_VALUE * df["goldCost"])
-      .assign(total_bp_weight = lambda df: df.groupby("itemId")["bp_weight"]
+      .assign(total_bp_weight = lambda df: df.groupby("itemId")
+                                            ["bp_weight"]
                                              .transform("sum"))
       .assign(bp_sanity_coeff = lambda df: _BYPRODUCT_RATE_BONUS *
                                            df["extraOutcomeRate"] *
@@ -97,7 +98,7 @@ _recipe_data = (
 )
 
 _ingredient_matrix = (
-    pd.json_normalize(_recipes,
+    pd.json_normalize(data=_recipes,
                       record_path="costs",
                       meta="itemId")
       .pivot(index="itemId",
@@ -109,26 +110,26 @@ _ingredient_matrix = (
 def get_sanity_values(datetime, items):
     drop_matrix = (
         _drop_data.query("start <= @datetime")
-                 .reindex(columns=items)
-                 .reset_index(level="start", drop=True)
+                  .reindex(columns=items)
+                  .reset_index(level="start", drop=True)
     )
 
     byproduct_matrix = (
         _recipe_data.query("itemId in @items")
-                   .reindex(columns=items)
+                    .reindex(columns=items)
     )
 
     recipe_matrix = (
         _ingredient_matrix.query("itemId in @items")
-                         .reindex(columns=items)
-                         .pipe(_fill_diagonal,
-                               byproduct_matrix.index.get_level_values("count"))
-                         .to_numpy(na_value=0)
+                          .reindex(columns=items)
+                          .pipe(_fill_diagonal,
+                                byproduct_matrix.index.get_level_values("count"))
+                          .to_numpy(na_value=0)
     )
 
     sanity_costs = (
         _stage_sanity_costs.reindex(drop_matrix.index)
-                          .to_numpy()
+                           .to_numpy()
     )
 
     stage_drops, sanity_profit = _finalize_drops(drop_matrix)
