@@ -2,6 +2,7 @@ from constants import *
 import pandas as pd
 import dateparser
 import requests
+import calc
 
 def adjust_time(df):
     df["国服上线时间"] += pd.Timedelta(hours=16)
@@ -44,10 +45,12 @@ char_upgrade_costs = (
 )
 
 for char_name, upgrade_costs in char_upgrade_costs.groupby(level="appellation", sort=False):
-    debut_time = upgrade_costs.index.unique(level="国服上线时间")
+    debut_time = upgrade_costs.index.get_level_values("国服上线时间")[0]
     if debut_time < pd.to_datetime("2019-12-24 08:00:00"): # ch6
         upgrade_costs = upgrade_costs.drop(columns=["31013", "31014", "31023", "31024"])
     if debut_time < pd.to_datetime("2020-11-01 08:00:00"): # ch8
         upgrade_costs = upgrade_costs.drop(columns=["31033", "31034", "30145"])
     if debut_time < pd.to_datetime("2021-09-17 08:00:00"): # ch9
         upgrade_costs = upgrade_costs.drop(columns=["31043", "31044", "31053", "31054"])
+
+    sanity_values = calc.get_sanity_values(debut_time, upgrade_costs.columns)
