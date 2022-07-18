@@ -66,13 +66,13 @@ mastery_costs = (
       .set_axis([1, 2, 3])
       .reset_index()
       .melt(id_vars="index")
-      .set_axis(["Skill", "Operator", "Sanity Cost"], axis=1)
+      .set_axis(["Skill", "Operators", "Sanity Cost"], axis=1)
 )
 
 sns.set_theme(style="whitegrid", context="paper", palette=["#fb2c20", "#43c03b", "#3060a8"], font_scale=2)
 cost_bar = (
     sns.catplot(data=mastery_costs, kind="bar",
-                x="Operator", y="Sanity Cost", hue="Skill",
+                x="Operators", y="Sanity Cost", hue="Skill",
                 alpha=.8, height=10, aspect=4)
        .set_xticklabels(rotation=90)
        .set(ylim=(3200, 4800))
