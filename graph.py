@@ -84,7 +84,7 @@ cost_bar.savefig("mastery_costs_bar.png", dpi=200)
 sns.set_theme(style="whitegrid",
               context="paper")
 cost_hist = (
-    sns.displot(data=mastery_costs, bins=20,
+    sns.displot(data=mastery_costs, kind="hist", bins=20,
                 x="Sanity Cost",
                 color="#52ad9c", alpha=1, aspect=1.2)
        .despine(left=True)
