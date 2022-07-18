@@ -81,6 +81,6 @@ cost_bar = (
 )
 
 cost_hist = (
-    sns.displot(mastery_costs, x="value", color="#52ad9c", alpha=1, bins=15)
+    sns.displot(mastery_costs, x="value", color="#52ad9c", alpha=1, bins=20)
        .savefig("mastery_costs_hist.png")
 )
