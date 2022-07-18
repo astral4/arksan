@@ -4,6 +4,8 @@ import dateparser
 import requests
 from collections import defaultdict
 import calc
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def adjust_time(df):
     df["国服上线时间"] += pd.Timedelta(hours=16)
@@ -47,7 +49,7 @@ char_upgrade_costs = (
 
 sanity_costs = defaultdict()
 
-for char_name, upgrade_costs in char_upgrade_costs.groupby(level="appellation", sort=False):
+for char_name, upgrade_costs in char_upgrade_costs.head(15).groupby(level="appellation", sort=False):
     debut_time = upgrade_costs.index.get_level_values("国服上线时间")[0]
 
     if debut_time < pd.to_datetime("2019-12-24 08:00:00"): # ch6
@@ -63,6 +65,17 @@ for char_name, upgrade_costs in char_upgrade_costs.groupby(level="appellation", 
 mastery_costs = (
     pd.DataFrame(sanity_costs)
       .set_axis([1, 2, 3])
-      .rename_axis("Skill Number", axis=0)
-      .rename_axis("Operators", axis=1)
+      .rename_axis("skill", axis=0)
+      .rename_axis("operators", axis=1)
+      .reset_index()
+      .melt(id_vars="skill")
 )
+
+plt.figure()
+sns.set(style="whitegrid", context="paper", palette=["#fb2c20", "#63e05b", "#3060a8"])
+sns.catplot(
+    data=mastery_costs, kind="bar",
+    x="value", y="operators", hue="skill",
+    alpha=.8, height=6
+)
+plt.show()
