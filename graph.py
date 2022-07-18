@@ -77,7 +77,7 @@ cost_bar = (
        .set_xticklabels(rotation=90)
        .set(ylim=(3200, 4800))
 )
-cost_bar.fig.suptitle("6* Operator Skill Mastery Costs", y=1.05)
+cost_bar.fig.suptitle("6* Operator Skill Mastery Costs", y=1.02)
 cost_bar.savefig("mastery_costs_bar.png", dpi=200)
 
 sns.set_theme(style="whitegrid", context="paper")
