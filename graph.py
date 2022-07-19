@@ -97,7 +97,7 @@ sns.set_theme(style="whitegrid",
 cost_hist = (
     sns.displot(data=mastery_costs, kind="hist", bins=20,
                 x="Sanity Cost",
-                color="#52ad9c", alpha=1, aspect=1.2)
+                color="#52ad9c", alpha=1, aspect=2)
        .despine(left=True)
 )
 cost_hist.fig.suptitle("6* Operator Skill Mastery Costs", y=1.02)
