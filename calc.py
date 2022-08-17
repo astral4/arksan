@@ -60,6 +60,7 @@ sanity_costs = (
       .pipe(patch_stage_costs)
       .reindex(drop_matrix.index)
       .to_numpy()
+      .flatten()
 )
 
 recipes = (
@@ -112,4 +113,14 @@ sanity_values = (
     .x
 )
 
-sanity_values = {item_id: sanity_value for item_id, sanity_value in zip(INCLUDED_ITEMS, sanity_values)}
+#sanity_values = {item_id: sanity_value for item_id, sanity_value in zip(INCLUDED_ITEMS, sanity_values)}
+#print(sanity_values)
+
+import numpy as np
+stage_efficiencies = (drop_matrix.to_numpy(na_value=0).dot(sanity_values) - sanity_costs) / sanity_costs + 1
+print(stage_efficiencies)
+print(stage_efficiencies[drop_matrix.index.get_loc("main_01-07")])
+
+print(np.where(stage_efficiencies > 0.999))
+print(drop_matrix.iloc[np.where(stage_efficiencies > 0.999)])
+print(drop_matrix.iloc[np.where(stage_efficiencies > 0.99)])
